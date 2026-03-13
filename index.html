@@ -18,61 +18,79 @@ header{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:8px 18px;
+  padding:6px 14px;
   border-bottom:1px solid var(--border);
   background:var(--surface);
   position:sticky;top:0;z-index:100;
-  min-height:0;
   overflow:visible;
+  gap:10px;
+}
+/* LEFT block: logout btn + name + version stacked */
+.header-left{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:9px;
+  flex-shrink:0;
 }
 .logo-block{
   display:flex;flex-direction:column;
   justify-content:center;
-  gap:3px;
+  gap:2px;
   overflow:visible;
 }
 .logo{
   font-family:'Syne',sans-serif;font-weight:800;
-  font-size:1.05rem;letter-spacing:-.3px;
+  font-size:.95rem;letter-spacing:-.2px;
   color:#c0392b;
-  display:block;
-  line-height:1.2;
-  overflow:visible;
-  text-transform:uppercase;
-}
-.logo-sub{
-  font-size:.58rem;font-weight:500;color:var(--muted);
-  letter-spacing:1px;text-transform:uppercase;
   display:block;line-height:1.2;
+  overflow:visible;text-transform:uppercase;
 }
+.logo-sub{ display:none; }
 .logo-ver{
-  font-size:.55rem;color:var(--muted);opacity:.5;
+  font-size:.52rem;color:var(--muted);opacity:.55;
   letter-spacing:.3px;line-height:1.2;display:block;
 }
-.header-clock{
-  display:flex;flex-direction:column;
+/* Logout button — styled like a badge/chip */
+.header-logout{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:20px;
+  color:var(--muted);font-size:.62rem;cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+  padding:3px 9px;
+  white-space:nowrap;flex-shrink:0;
+  transition:border-color .15s, color .15s;
+  line-height:1.4;
+}
+.header-logout:hover{color:#fa6d6d;border-color:#fa6d6d;}
+/* RIGHT block: time on top, drive status below */
+.header-right{
+  display:flex;
+  flex-direction:column;
   align-items:flex-end;
   justify-content:center;
-  gap:3px;
-}
-.header-clock-top{
-  display:flex;align-items:baseline;gap:7px;
+  gap:2px;
+  flex-shrink:0;
 }
 .clock-time{
   font-family:'Syne',sans-serif;font-weight:700;
   font-size:1.05rem;color:#e8e8f0;
   line-height:1.2;display:block;
+  white-space:nowrap;
 }
-.clock-date{
-  font-family:'Syne',sans-serif;font-weight:700;
-  font-size:1.05rem;color:#e8e8f0;
-  line-height:1.2;display:block;
+/* drive status inside header */
+#header-drive{
+  display:flex;align-items:center;gap:5px;
 }
-.header-logout{
-  background:transparent;border:none;
-  color:var(--muted);font-size:.6rem;cursor:pointer;
-  font-family:'DM Sans',sans-serif;padding:0;text-align:right;
-  transition:color .15s;line-height:1.2;
+/* hide old drive bar */
+#drive-status-bar{ display:none !important; }
+/* mobile: shrink time a bit */
+@media(max-width:380px){
+  .clock-time{font-size:.9rem;}
+  .logo{font-size:.85rem;}
+  header{padding:5px 10px;}
 }
 
 /* ── TABS ── */
@@ -809,30 +827,21 @@ textarea{resize:vertical;min-height:55px;}
 
 <!-- HEADER -->
 <header>
-  <div class="logo-block">
-    <span class="logo">Organizer Ady</span>
-    <span class="logo-sub">Social Media Manager</span>
-    <span class="logo-ver">v1.0.130326</span>
-  </div>
-  <div class="header-clock">
-    <div class="header-clock-top">
-      <span class="clock-date" id="clock-date">---</span>
-      <span class="clock-time" id="clock-time">--:--</span>
+  <div class="header-left">
+    <button class="header-logout" onclick="handleLogout()">wyloguj</button>
+    <div class="logo-block">
+      <span class="logo">Organizer</span>
+      <span class="logo-ver">v1.0.130326</span>
     </div>
-    <button class="header-logout" onclick="handleLogout()"
-      onmouseover="this.style.color='#fa6d6d'"
-      onmouseout="this.style.color='var(--muted)'">wyloguj</button>
+  </div>
+  <div class="header-right">
+    <span class="clock-time" id="clock-time">--:--</span>
+    <div id="header-drive"><div id="drive-status"></div></div>
   </div>
 </header>
 
-<!-- DRIVE STATUS BAR -->
-<div id="drive-status-bar" style="
-  display:flex;align-items:center;justify-content:flex-end;gap:10px;
-  padding:5px 16px;background:var(--surface);border-bottom:1px solid var(--border);
-  min-height:34px;flex-shrink:0;
-">
-  <div id="drive-status"></div>
-</div>
+<!-- DRIVE STATUS BAR (hidden — kept for JS compatibility) -->
+<div id="drive-status-bar" style="display:none;"></div>
 
 <!-- TABS -->
 <div class="tabs">
@@ -1357,31 +1366,29 @@ function renderDriveStatus() {
   const el = document.getElementById('drive-status');
   if (!el) return;
   if (gdriveToken) {
-    // Show connected state immediately, then fetch quota
     el.innerHTML = `
-      <span id="drive-quota" style="color:var(--muted);font-size:.72rem;">Miejsce: …</span>
-      <span style="color:#6dfa9a;font-size:.75rem;">✓ Dysk połączony</span>
-      <button class="btn btn-sm" style="font-size:.7rem;padding:3px 8px;" onclick="gdriveSignOut()">Rozłącz</button>`;
+      <span id="drive-quota" style="color:var(--muted);font-size:.62rem;">…</span>
+      <span style="color:#6dfa9a;font-size:.62rem;">✓</span>
+      <button class="btn btn-sm" style="font-size:.6rem;padding:2px 7px;" onclick="gdriveSignOut()">Rozłącz</button>`;
     hideDriveBanner();
-    // Fetch quota async
     gdriveApiCall('https://www.googleapis.com/drive/v3/about?fields=storageQuota')
       .then(r => r.json())
       .then(data => {
         const q = data.storageQuota;
         if (!q) return;
-        const used  = parseInt(q.usage      || 0);
-        const total = parseInt(q.limit      || 0);
+        const used  = parseInt(q.usage || 0);
+        const total = parseInt(q.limit || 0);
         const usedGB  = (used  / 1073741824).toFixed(1);
         const totalGB = total > 0 ? (total / 1073741824).toFixed(0) + ' GB' : '∞';
         const qEl = document.getElementById('drive-quota');
-        if (qEl) qEl.innerHTML = `Miejsce: <strong style="color:var(--text);">${usedGB} GB / ${totalGB}</strong>`;
+        if (qEl) qEl.innerHTML = `<strong style="color:var(--text);">${usedGB}</strong>/<strong style="color:var(--text);">${totalGB}</strong>`;
       })
       .catch(() => {
         const qEl = document.getElementById('drive-quota');
         if (qEl) qEl.style.display = 'none';
       });
   } else {
-    el.innerHTML = `<button class="btn btn-sm btn-primary" style="font-size:.75rem;" onclick="gdriveSignIn()">🔗 Połącz Google Drive</button>`;
+    el.innerHTML = `<button class="btn btn-sm btn-primary" style="font-size:.62rem;padding:2px 8px;" onclick="gdriveSignIn()">🔗 Drive</button>`;
     showDriveBanner();
   }
 }
@@ -1630,9 +1637,7 @@ function startClock() {
   function tick() {
     const now = new Date();
     const t = now.toLocaleTimeString('pl-PL',{timeZone:'Europe/Warsaw',hour:'2-digit',minute:'2-digit'});
-    const d = now.toLocaleDateString('pl-PL',{timeZone:'Europe/Warsaw',day:'numeric',month:'short',year:'numeric'});
     document.getElementById('clock-time').textContent = t;
-    document.getElementById('clock-date').textContent = d;
   }
   tick();
   setInterval(tick, 10000);
