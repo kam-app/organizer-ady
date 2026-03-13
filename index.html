@@ -16,49 +16,64 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 /* ── HEADER ── */
 header{
   display:flex;
-  /* align-items:center clips descenders on iOS Safari — use flex-start instead */
-  align-items:flex-start;
+  align-items:center;
   justify-content:space-between;
-  padding:12px 18px 10px;
+  padding:8px 18px;
   border-bottom:1px solid var(--border);
   background:var(--surface);
   position:sticky;top:0;z-index:100;
-  min-height:54px;
-  /* Never clip anything inside header */
+  min-height:0;
   overflow:visible;
 }
 .logo-block{
   display:flex;flex-direction:column;
+  justify-content:center;
+  gap:3px;
   overflow:visible;
-  /* Don't constrain height */
 }
 .logo{
   font-family:'Syne',sans-serif;font-weight:800;
-  font-size:1.15rem;letter-spacing:-.4px;
+  font-size:1.05rem;letter-spacing:-.3px;
   color:#c0392b;
   display:block;
-  /* line-height:1 is too tight for descenders — use 1.4 minimum */
-  line-height:1.4;
-  /* padding-bottom gives physical space below baseline for g,y,p,q,j */
-  padding-bottom:6px;
+  line-height:1.2;
   overflow:visible;
   text-transform:uppercase;
 }
 .logo-sub{
-  font-size:.63rem;font-weight:500;color:var(--muted);
-  letter-spacing:1.1px;text-transform:uppercase;
-  display:block;line-height:1;margin-top:2px;
+  font-size:.58rem;font-weight:500;color:var(--muted);
+  letter-spacing:1px;text-transform:uppercase;
+  display:block;line-height:1.2;
+}
+.logo-ver{
+  font-size:.55rem;color:var(--muted);opacity:.5;
+  letter-spacing:.3px;line-height:1.2;display:block;
 }
 .header-clock{
   display:flex;flex-direction:column;
-  text-align:right;padding-top:2px;
+  align-items:flex-end;
+  justify-content:center;
+  gap:3px;
+}
+.header-clock-top{
+  display:flex;align-items:baseline;gap:7px;
 }
 .clock-time{
   font-family:'Syne',sans-serif;font-weight:700;
   font-size:1.05rem;color:#e8e8f0;
-  line-height:1.4;display:block;
+  line-height:1.2;display:block;
 }
-.clock-date{font-size:.63rem;color:var(--muted);display:block;margin-top:2px;}
+.clock-date{
+  font-family:'Syne',sans-serif;font-weight:700;
+  font-size:1.05rem;color:#e8e8f0;
+  line-height:1.2;display:block;
+}
+.header-logout{
+  background:transparent;border:none;
+  color:var(--muted);font-size:.6rem;cursor:pointer;
+  font-family:'DM Sans',sans-serif;padding:0;text-align:right;
+  transition:color .15s;line-height:1.2;
+}
 
 /* ── TABS ── */
 .tabs{
@@ -797,17 +812,16 @@ textarea{resize:vertical;min-height:55px;}
   <div class="logo-block">
     <span class="logo">Organizer Ady</span>
     <span class="logo-sub">Social Media Manager</span>
+    <span class="logo-ver">v1.0.130326</span>
   </div>
   <div class="header-clock">
-    <span class="clock-time" id="clock-time">--:--</span>
-    <span class="clock-date" id="clock-date">---</span>
-    <button onclick="handleLogout()" style="
-      margin-top:4px;background:transparent;border:none;
-      color:var(--muted);font-size:.62rem;cursor:pointer;
-      font-family:'DM Sans',sans-serif;padding:0;text-align:right;
-      transition:color .15s;
-    " onmouseover="this.style.color='#fa6d6d'" onmouseout="this.style.color='var(--muted)'">wyloguj</button>
-    <span style="font-size:.52rem;color:var(--muted);opacity:.45;text-align:right;margin-top:2px;letter-spacing:.3px;">v1.0.130326</span>
+    <div class="header-clock-top">
+      <span class="clock-date" id="clock-date">---</span>
+      <span class="clock-time" id="clock-time">--:--</span>
+    </div>
+    <button class="header-logout" onclick="handleLogout()"
+      onmouseover="this.style.color='#fa6d6d'"
+      onmouseout="this.style.color='var(--muted)'">wyloguj</button>
   </div>
 </header>
 
@@ -1616,7 +1630,7 @@ function startClock() {
   function tick() {
     const now = new Date();
     const t = now.toLocaleTimeString('pl-PL',{timeZone:'Europe/Warsaw',hour:'2-digit',minute:'2-digit'});
-    const d = now.toLocaleDateString('pl-PL',{timeZone:'Europe/Warsaw',day:'numeric',month:'long',year:'numeric'});
+    const d = now.toLocaleDateString('pl-PL',{timeZone:'Europe/Warsaw',day:'numeric',month:'short',year:'numeric'});
     document.getElementById('clock-time').textContent = t;
     document.getElementById('clock-date').textContent = d;
   }
