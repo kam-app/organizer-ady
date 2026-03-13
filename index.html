@@ -1,0 +1,2928 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Organizer Ady</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d0f;--surface:#16161a;--surface2:#1e1e24;--border:#2a2a32;
+  --accent:#c0392b;--accent2:#e74c3c;--text:#e8e8f0;--muted:#6b6b80;--radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100%;overflow:hidden;}
+
+/* ── HEADER ── */
+header{
+  display:flex;
+  /* align-items:center clips descenders on iOS Safari — use flex-start instead */
+  align-items:flex-start;
+  justify-content:space-between;
+  padding:12px 18px 10px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface);
+  position:sticky;top:0;z-index:100;
+  min-height:54px;
+  /* Never clip anything inside header */
+  overflow:visible;
+}
+.logo-block{
+  display:flex;flex-direction:column;
+  overflow:visible;
+  /* Don't constrain height */
+}
+.logo{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:1.15rem;letter-spacing:-.4px;
+  color:#c0392b;
+  display:block;
+  /* line-height:1 is too tight for descenders — use 1.4 minimum */
+  line-height:1.4;
+  /* padding-bottom gives physical space below baseline for g,y,p,q,j */
+  padding-bottom:6px;
+  overflow:visible;
+  text-transform:uppercase;
+}
+.logo-sub{
+  font-size:.63rem;font-weight:500;color:var(--muted);
+  letter-spacing:1.1px;text-transform:uppercase;
+  display:block;line-height:1;margin-top:2px;
+}
+.header-clock{
+  display:flex;flex-direction:column;
+  text-align:right;padding-top:2px;
+}
+.clock-time{
+  font-family:'Syne',sans-serif;font-weight:700;
+  font-size:1.05rem;color:#e8e8f0;
+  line-height:1.4;display:block;
+}
+.clock-date{font-size:.63rem;color:var(--muted);display:block;margin-top:2px;}
+
+/* ── TABS ── */
+.tabs{
+  display:flex;gap:2px;background:var(--surface2);
+  border-bottom:1px solid var(--border);padding:8px 8px 0;flex-shrink:0;
+}
+.tab{
+  flex:1;text-align:center;
+  padding:7px 6px;font-size:.78rem;font-weight:500;
+  border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);
+  border:1px solid transparent;border-bottom:none;
+  transition:all .15s;background:transparent;font-family:'DM Sans',sans-serif;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.tab.active{background:var(--bg);color:var(--text);border-color:var(--border);}
+.tab:not(.active):hover{color:var(--text);}
+
+/* ── BUTTONS ── */
+.btn{
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:7px 13px;border-radius:8px;font-size:.82rem;
+  font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.btn:hover{background:var(--border);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500;}
+.btn-primary:hover{background:#6b5de8;}
+.btn-sm{padding:5px 10px;font-size:.76rem;}
+.btn-danger{color:#fa6d6d;border-color:#3a2020;}
+.btn-danger:hover{background:#2a1515;}
+
+/* ── LAYOUT ── */
+.app{
+  display:grid;grid-template-columns:190px 1fr;
+  height:calc(100dvh - 54px - 34px - 43px);
+  overflow:hidden;
+  min-height:0;
+  align-items:stretch;
+}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  background:var(--surface);border-right:1px solid var(--border);
+  padding:14px 10px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:20px;
+}
+.sidebar-section-title{
+  font-size:.66rem;font-weight:600;letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--muted);padding:0 6px;margin-bottom:5px;
+}
+.client-item{
+  display:flex;align-items:center;gap:9px;padding:7px 9px;
+  border-radius:8px;cursor:default;font-size:.84rem;
+  justify-content:space-between;
+}
+.client-item-left{display:flex;align-items:center;gap:9px;flex:1;min-width:0;}
+.client-item-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.client-delete-btn{
+  width:20px;height:20px;border-radius:50%;
+  background:#c0392b;border:none;color:#fff;
+  font-size:.6rem;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;opacity:0;transition:opacity .15s;
+}
+.client-item:hover .client-delete-btn{opacity:1;}
+@media(max-width:700px){.client-delete-btn{opacity:1;}}
+.client-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.add-client-btn{
+  display:flex;align-items:center;gap:7px;padding:7px 9px;
+  border-radius:8px;cursor:pointer;color:var(--muted);font-size:.8rem;
+  transition:all .15s;border:1px dashed var(--border);margin-top:3px;
+}
+.add-client-btn:hover{color:var(--text);border-color:var(--accent);}
+
+/* ── PLANER TILE ── */
+.planer-tile{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:9px;padding:8px 9px;cursor:pointer;
+  border-left:3px solid transparent;transition:filter .15s,border-color .15s;
+}
+.planer-tile:hover{filter:brightness(1.12);border-color:var(--accent);}
+.planer-tile-top{
+  display:flex;align-items:center;gap:6px;
+  font-size:.79rem;font-weight:600;margin-bottom:3px;
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+.planer-tile-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.planer-tile-time{
+  font-size:.68rem;color:#a0a0b8;
+  display:flex;align-items:center;gap:4px;
+}
+.planer-tile-time.soon{color:#fad46d;}
+.planer-tile-time.today{color:#6dfa9a;font-weight:600;}
+.planer-tile-time.overdue{color:#fa6d6d;}
+.planer-tile-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;color:#d0d0e4;}
+.planer-empty{font-size:.74rem;color:var(--muted);padding:6px 4px;line-height:1.6;}
+
+/* panel delete button */
+.panel-delete-btn{
+  background:transparent;border:none;cursor:pointer;
+  font-size:.85rem;padding:2px 4px;border-radius:5px;
+  transition:background .15s;line-height:1;flex-shrink:0;
+}
+.panel-delete-btn:hover{background:rgba(250,109,109,.18);}
+
+/* ── DRIVE DISCONNECT BANNER ── */
+#drive-banner{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  z-index:800;
+  background:var(--surface);border:1px solid var(--border);
+  border-left:3px solid #fad46d;
+  border-radius:var(--radius);
+  padding:14px 16px 12px;
+  width:min(340px,92vw);
+  box-shadow:0 8px 32px rgba(0,0,0,.55);
+  display:none;
+  flex-direction:column;gap:9px;
+  animation:slideUp .25s cubic-bezier(.4,0,.2,1);
+}
+#drive-banner.show{display:flex;}
+@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(12px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.drive-banner-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.drive-banner-icon{font-size:1.3rem;flex-shrink:0;margin-top:1px;}
+.drive-banner-msg{flex:1;}
+.drive-banner-title{font-weight:600;font-size:.88rem;color:var(--text);margin-bottom:3px;}
+.drive-banner-sub{font-size:.76rem;color:var(--muted);line-height:1.5;}
+.drive-banner-close{
+  background:transparent;border:none;color:var(--muted);
+  font-size:.85rem;cursor:pointer;padding:0;flex-shrink:0;line-height:1;
+  transition:color .15s;
+}
+.drive-banner-close:hover{color:var(--text);}
+.drive-banner-hint{font-size:.66rem;color:var(--muted);line-height:1.5;border-top:1px solid var(--border);padding-top:8px;}
+
+/* ── MAIN PANE ── */
+.main{
+  display:flex;flex-direction:column;
+  min-width:0;min-height:0;
+  height:100%;
+  overflow:hidden;
+  align-self:stretch;
+}
+
+.view-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 15px;border-bottom:1px solid var(--border);gap:8px;flex-shrink:0;
+}
+.cal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;white-space:nowrap;}
+.cal-nav{display:flex;gap:4px;}
+.nav-btn{
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  border-radius:7px;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);cursor:pointer;font-size:.95rem;transition:all .15s;
+}
+.nav-btn:hover{background:var(--border);}
+
+/* ── CALENDAR GRID ── */
+.calendar-wrap{flex:1 1 0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:11px 13px;min-height:0;}
+.weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+.weekday{
+  text-align:center;font-size:.65rem;font-weight:600;
+  letter-spacing:.4px;text-transform:uppercase;color:var(--muted);padding:4px 0;
+}
+.days-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.day-cell{
+  min-height:88px;background:var(--surface);border:1px solid var(--border);
+  border-radius:9px;padding:6px 5px 4px;cursor:pointer;
+  transition:border-color .15s;
+  display:flex;flex-direction:column;gap:2px;overflow:hidden;
+}
+.day-cell:hover{border-color:var(--accent);}
+.day-cell.today{border-color:var(--accent);background:rgba(192,57,43,.07);}
+.day-cell.other-month{opacity:.28;}
+.day-number{
+  font-size:.72rem;font-weight:600;color:var(--muted);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;margin-bottom:2px;
+}
+.day-cell.today .dn{
+  color:var(--accent);background:rgba(192,57,43,.2);
+  width:19px;height:19px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:.68rem;
+}
+.add-hint{font-size:.64rem;color:var(--muted);opacity:0;transition:opacity .15s;}
+.day-cell:hover .add-hint{opacity:1;}
+.count-badge{
+  font-size:.6rem;font-weight:700;
+  background:var(--accent);color:#fff;
+  padding:1px 5px;border-radius:20px;
+  flex-shrink:0;line-height:1.4;
+}
+.post-chip{
+  display:flex;align-items:center;gap:3px;padding:3px 5px;
+  border-radius:5px;font-size:.65rem;font-weight:500;cursor:pointer;
+  transition:filter .15s;overflow:hidden;flex-shrink:0;
+}
+.post-chip:hover{filter:brightness(1.25);}
+.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.chip-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.more-badge{font-size:.62rem;color:var(--muted);padding:1px 3px;flex-shrink:0;cursor:pointer;}
+.more-badge:hover{color:var(--text);}
+
+/* ── DAY PANEL (desktop: slide from right / mobile: bottom sheet) ── */
+.panel-overlay{
+  display:none;position:fixed;inset:0;z-index:290;background:rgba(0,0,0,.5);
+}
+.panel-overlay.open{display:block;}
+.day-panel{
+  position:fixed;top:0;right:0;bottom:0;
+  width:min(380px,100vw);
+  background:var(--surface);border-left:1px solid var(--border);
+  z-index:300;display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);
+}
+.day-panel.open{transform:translateX(0);}
+.day-panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.day-panel-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;}
+.day-panel-body{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:7px;}
+/* desktop footer hidden — add-post tile is in body */
+.day-panel-footer{display:none;}
+
+/* mobile: slide from bottom */
+@media(max-width:620px){
+  .day-panel{
+    top:auto;left:0;right:0;bottom:0;
+    width:100%;max-height:88dvh;
+    border-left:none;border-top:1px solid var(--border);
+    border-radius:16px 16px 0 0;
+    transform:translateY(100%);
+  }
+  .day-panel.open{transform:translateY(0);}
+  .day-panel-header-close{display:none;}
+  .day-panel-handle-wrap{display:block !important;}
+}
+
+/* dashed add-post tile in day panel body */
+.add-post-tile{
+  border:2px dashed var(--border);border-radius:10px;
+  padding:14px;text-align:center;
+  font-size:.83rem;color:var(--muted);cursor:pointer;
+  transition:border-color .15s,color .15s;flex-shrink:0;
+}
+.add-post-tile:hover,.add-post-tile:active{border-color:var(--accent);color:var(--accent);}
+
+/* post card inside day panel */
+.post-card{
+  background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  padding:11px 13px;cursor:pointer;transition:filter .15s;
+  border-left:3px solid transparent;
+}
+.post-card:hover{filter:brightness(1.08);}
+.post-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.post-card-title{font-weight:600;font-size:.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.post-card-meta{display:flex;gap:6px;align-items:center;font-size:.74rem;color:var(--muted);}
+.type-badge{padding:2px 7px;border-radius:20px;font-size:.69rem;font-weight:600;}
+
+/* ── NOTES TAB ── */
+.notes-wrap{flex:1 1 0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:11px 13px;display:flex;flex-direction:column;gap:7px;min-height:0;}
+.note-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;display:flex;align-items:flex-start;gap:10px;
+  cursor:pointer;transition:border-color .15s,opacity .3s,box-shadow .15s;
+  user-select:none;-webkit-user-select:none;
+  position:relative;
+}
+.note-card:hover{border-color:var(--accent);}
+.note-card.done{opacity:.35;}
+.note-card.dragging{
+  opacity:.5;border-color:var(--accent);
+  box-shadow:0 8px 32px rgba(192,57,43,.3);
+  cursor:grabbing;
+}
+.note-card.drag-over{border-color:var(--accent2);border-style:dashed;}
+.note-drag-handle{
+  width:16px;flex-shrink:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;
+  padding-top:3px;cursor:grab;opacity:.35;transition:opacity .15s;
+  touch-action:none;
+}
+.note-drag-handle:hover{opacity:.8;}
+.note-drag-handle span{
+  display:block;width:12px;height:2px;
+  background:var(--muted);border-radius:2px;
+}
+.note-delete-btn{
+  position:absolute;top:8px;right:8px;
+  width:24px;height:24px;font-size:.72rem;
+  flex-shrink:0;
+}
+.note-preview{flex:1;min-width:0;pointer-events:none;padding-right:28px;}
+.note-preview-title{font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.note-preview-body{font-size:.78rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.note-preview-date{font-size:.66rem;color:var(--muted);margin-top:5px;}
+.add-note-btn{
+  display:flex;align-items:center;gap:8px;padding:11px 14px;
+  background:var(--surface);border:1px dashed var(--border);
+  border-radius:10px;cursor:pointer;color:var(--muted);font-size:.83rem;
+  transition:all .15s;
+}
+.add-note-btn:hover{color:var(--text);border-color:var(--accent);}
+
+/* ── NOTE & CLIENT as MODAL (dymek) ── */
+/* Mobile: slide from bottom like post-modal */
+.note-fullscreen{
+  position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.72);
+  display:flex;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(5px);
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.note-fullscreen.open{opacity:1;pointer-events:all;}
+.note-fullscreen-inner{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius) var(--radius) 0 0;
+  width:100%;max-width:500px;
+  max-height:92dvh;display:flex;flex-direction:column;
+  transform:translateY(16px);transition:transform .22s;
+}
+.note-fullscreen.open .note-fullscreen-inner{transform:translateY(0);}
+@media(min-width:520px){
+  .note-fullscreen{align-items:center;}
+  .note-fullscreen-inner{
+    border-radius:var(--radius);
+    max-height:90dvh;
+    max-width:680px;
+    width:92vw;
+  }
+  .note-fs-body{padding:22px 26px;}
+  .note-fs-title{font-size:1.25rem;}
+  .note-fs-text{min-height:220px;}
+  .note-fs-footer{padding:14px 26px;}
+  .note-fs-header{padding:16px 26px 12px;}
+}
+/* overlay covers bg — click outside closes */
+
+.note-fs-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px 10px;border-bottom:1px solid var(--border);
+  background:var(--surface);flex-shrink:0;border-radius:var(--radius) var(--radius) 0 0;
+}
+@media(min-width:520px){
+  .note-fs-header{border-radius:var(--radius) var(--radius) 0 0;}
+}
+.note-fs-actions{display:flex;gap:7px;align-items:center;}
+.note-fs-body{flex:1;overflow-y:auto;padding:16px 18px;}
+.note-fs-title{
+  width:100%;background:transparent;border:none;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;
+  color:var(--text);outline:none;margin-bottom:12px;
+  border-bottom:1px solid var(--border);padding-bottom:10px;
+}
+.note-fs-title::placeholder{color:var(--muted);}
+.note-fs-text{
+  width:100%;background:transparent;border:none;
+  font-family:'DM Sans',sans-serif;font-size:.92rem;line-height:1.7;
+  color:var(--text);outline:none;resize:none;min-height:120px;
+}
+.note-fs-text::placeholder{color:var(--muted);}
+.note-fs-footer{
+  display:flex;justify-content:flex-end;gap:7px;
+  padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0;
+}
+
+/* ── CLIENT FULLSCREEN as MODAL ── */
+.client-fullscreen{
+  position:fixed;inset:0;z-index:602;background:rgba(0,0,0,.72);
+  display:flex;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(5px);
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.client-fullscreen.open{opacity:1;pointer-events:all;}
+.client-fullscreen-inner{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius) var(--radius) 0 0;
+  width:100%;max-width:500px;
+  max-height:92dvh;display:flex;flex-direction:column;
+  transform:translateY(16px);transition:transform .22s;
+}
+.client-fullscreen.open .client-fullscreen-inner{transform:translateY(0);}
+@media(min-width:520px){
+  .client-fullscreen{align-items:center;}
+  .client-fullscreen-inner{
+    border-radius:var(--radius);
+    max-height:90dvh;
+    max-width:600px;
+    width:92vw;
+  }
+  .client-fs-body{padding:20px 26px;}
+  .client-fs-footer{padding:14px 26px;}
+  .client-fs-fields{gap:14px;}
+}
+.client-fs-body{
+  flex:1;overflow-y:auto;padding:16px 18px;
+  display:flex;flex-direction:column;gap:0;
+}
+.client-fs-color-row{
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;
+}
+.client-fs-color-dot{
+  width:14px;height:14px;border-radius:50%;flex-shrink:0;
+}
+.client-fs-fields{display:flex;flex-direction:column;gap:12px;}
+.client-fs-field{display:flex;flex-direction:column;gap:4px;}
+.client-fs-field label{
+  font-size:.69rem;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.4px;
+}
+.client-fs-field input,
+.client-fs-field textarea{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  color:var(--text);padding:9px 11px;border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;
+  transition:border-color .15s;-webkit-appearance:none;box-sizing:border-box;
+}
+.client-fs-field input:focus,
+.client-fs-field textarea:focus{border-color:var(--accent);}
+.client-fs-field textarea{resize:vertical;min-height:80px;}
+.client-fs-footer{
+  display:flex;justify-content:flex-end;gap:7px;
+  padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0;
+}
+
+/* ── MODAL (post form / detail) ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:600;
+  display:flex;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .2s;
+}
+@media(min-width:520px){.modal-overlay{align-items:center;}}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius) var(--radius) 0 0;
+  width:100%;max-width:460px;padding:20px 18px;
+  max-height:92dvh;overflow-y:auto;
+  transform:translateY(16px);transition:transform .22s;
+}
+@media(min-width:520px){
+  .modal{border-radius:var(--radius);max-height:90dvh;max-width:600px;padding:26px 28px;}
+}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:15px;}
+.form-group{margin-bottom:12px;}
+label{display:block;font-size:.69rem;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;}
+input,select,textarea{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  color:var(--text);padding:9px 11px;border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;
+  transition:border-color .15s;-webkit-appearance:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+select option{background:var(--surface);}
+textarea{resize:vertical;min-height:55px;}
+.color-picker-row{display:flex;gap:7px;flex-wrap:wrap;}
+.color-swatch{
+  width:24px;height:24px;border-radius:50%;cursor:pointer;
+  border:2px solid transparent;transition:border-color .15s,transform .15s;
+}
+.color-swatch:hover,.color-swatch.selected{border-color:#fff;transform:scale(1.15);}
+.modal-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:15px;flex-wrap:wrap;}
+.close-btn{
+  width:28px;height:28px;border-radius:50%;
+  background:#c0392b;border:none;
+  color:#fff;font-size:.85rem;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s;flex-shrink:0;line-height:1;
+}
+.close-btn:hover{background:#e74c3c;}
+
+/* client inline-add row */
+.client-add-row{display:flex;gap:6px;margin-top:6px;}
+.client-add-row input{flex:1;}
+
+/* detail modal */
+.detail-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:600;margin-bottom:7px;}
+.detail-field{background:var(--bg);border-radius:8px;padding:9px 11px;margin-bottom:7px;}
+.detail-field-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;font-weight:600;}
+.detail-field-value{font-size:.86rem;}
+.files-drop{
+  border:2px dashed var(--border);border-radius:8px;padding:13px;
+  text-align:center;color:var(--muted);font-size:.79rem;cursor:pointer;
+  transition:all .15s;margin-bottom:7px;line-height:1.5;
+}
+.files-drop:hover{border-color:var(--accent);color:var(--text);}
+.file-list{display:flex;flex-direction:column;gap:4px;}
+.file-item{display:flex;align-items:center;gap:7px;background:var(--bg);padding:6px 9px;border-radius:7px;font-size:.78rem;}
+
+/* ── FILES TAB ── */
+.files-tab-wrap{
+  flex:1 1 0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:11px 13px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-height:0;
+}
+.file-post-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;
+  flex-shrink:0;
+  width:100%;
+  box-sizing:border-box;
+}
+.file-post-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 13px;background:var(--surface2);border-bottom:1px solid var(--border);
+  gap:8px;
+  flex-wrap:nowrap;
+  min-width:0;
+}
+.file-post-header > div:first-child{
+  flex:1;min-width:0;overflow:hidden;
+}
+.file-post-title{font-weight:600;font-size:.84rem;}
+.file-post-meta{font-size:.72rem;color:var(--muted);margin-top:1px;}
+.file-post-files{display:flex;flex-direction:column;gap:0;}
+.file-row{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 13px;border-top:1px solid var(--border);
+  min-width:0;
+}
+.file-row-icon{font-size:1.2rem;flex-shrink:0;}
+.file-row-info{flex:1;min-width:0;}
+.file-row-name{font-size:.83rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-row-size{font-size:.7rem;color:var(--muted);margin-top:1px;}
+.file-row-actions{display:flex;gap:5px;flex-shrink:0;align-items:center;}
+.file-add-btn{
+  padding:8px 13px;font-size:.78rem;color:var(--muted);
+  cursor:pointer;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:5px;transition:color .15s;
+}
+.file-add-btn:hover{color:var(--accent);}
+.files-empty{
+  color:var(--muted);font-size:.84rem;
+  padding:30px;text-align:center;line-height:1.7;
+}
+
+/* ── NOTE PHOTOS ── */
+.note-photos-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+  gap:8px;margin-top:14px;
+}
+.note-photo-thumb{
+  aspect-ratio:1;border-radius:8px;overflow:hidden;
+  cursor:pointer;position:relative;
+  border:1px solid var(--border);
+}
+.note-photo-thumb img{
+  width:100%;height:100%;object-fit:cover;
+  transition:filter .15s;display:block;
+}
+.note-photo-thumb:hover img{filter:brightness(.8);}
+
+/* ── LIGHTBOX ── */
+.lightbox-overlay{
+  position:fixed;inset:0;z-index:600;
+  background:rgba(0,0,0,.92);
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:20px;
+}
+.lightbox-overlay.open{display:flex;}
+.lightbox{
+  display:flex;flex-direction:column;align-items:center;
+  gap:16px;max-width:100%;max-height:100%;
+}
+.lightbox img{
+  max-width:min(700px,90vw);
+  max-height:70dvh;
+  border-radius:10px;
+  object-fit:contain;
+}
+.lightbox-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+
+/* ── CLIENTS TAB ── */
+.clients-wrap{
+  flex:1 1 0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:11px 13px;
+  display:grid;grid-template-columns:1fr;gap:9px;
+  align-content:start;
+  min-height:0;
+}
+@media(min-width:520px){.clients-wrap{grid-template-columns:repeat(2,1fr);}}
+.client-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:14px 14px 12px;
+  position:relative;cursor:default;
+  transition:border-color .15s,box-shadow .15s;
+}
+.client-card:hover{border-color:var(--accent);box-shadow:0 4px 18px rgba(192,57,43,.12);}
+.client-card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.client-card-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+.client-card-name{
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;
+  flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.client-card-gear{
+  width:28px;height:28px;border-radius:8px;
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--muted);font-size:.9rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;
+}
+.client-card-gear:hover{background:var(--accent);border-color:var(--accent);color:#fff;}
+.client-card-fields{display:flex;flex-direction:column;gap:5px;}
+.client-card-field{
+  display:flex;align-items:center;gap:7px;
+  font-size:.78rem;color:var(--muted);
+}
+.client-card-field span:first-child{flex-shrink:0;font-size:.82rem;}
+.client-card-field span:last-child{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--text);
+}
+.client-card-empty{
+  color:var(--muted);font-size:.84rem;padding:30px;
+  text-align:center;line-height:1.7;grid-column:1/-1;
+}
+.client-payment-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:.7rem;font-weight:600;padding:2px 7px;
+  border-radius:20px;margin-top:6px;
+}
+.client-payment-badge.overdue{background:rgba(250,109,109,.15);color:#fa6d6d;}
+.client-payment-badge.soon{background:rgba(250,212,109,.15);color:#fad46d;}
+.client-payment-badge.ok{background:rgba(109,250,154,.15);color:#6dfa9a;}
+.client-pay-row{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  gap:8px;flex-wrap:nowrap;
+}
+.pay-done-btn{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;
+  background:rgba(109,250,154,.2);color:#6dfa9a;
+  border:1px solid rgba(109,250,154,.4);cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.pay-done-btn:hover{background:rgba(109,250,154,.4);border-color:#6dfa9a;}
+
+/* ── TOAST ── */
+.toast {
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:9px 18px;border-radius:20px;
+  font-size:.8rem;z-index:9000;opacity:0;
+  transition:all .3s;pointer-events:none;white-space:nowrap;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+.toast.show {opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+
+/* ── MOBILE ── */
+@media(max-width:620px){
+  .app{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .calendar-wrap{padding:7px;}
+  .day-cell{min-height:58px;padding:4px 3px 3px;border-radius:7px;}
+  .weekday{font-size:.59rem;}
+  .days-grid,.weekdays{gap:2px;}
+  .view-header{padding:8px 10px;}
+  .notes-wrap{padding:7px;}
+  .note-fs-body{padding:16px;}
+  .note-fs-title{font-size:1.15rem;}
+}
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="
+  display:none;position:fixed;inset:0;z-index:9998;
+  background:var(--bg);
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;
+">
+  <div style="width:100%;max-width:340px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;color:#c0392b;letter-spacing:-.5px;text-transform:uppercase;">Organizer Ady</div>
+      <div style="font-size:.72rem;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px;">Social Media Manager</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:18px;">Zaloguj się</div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:.69rem;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;">Email</label>
+        <input id="login-email" type="email" placeholder="twoj@email.com"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;-webkit-appearance:none;box-sizing:border-box;"
+          onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:.69rem;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;">Hasło</label>
+        <input id="login-password" type="password" placeholder="••••••••"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;-webkit-appearance:none;box-sizing:border-box;"
+          onkeydown="if(event.key==='Enter')handleLogin()">
+      </div>
+      <div id="login-error" style="color:#fa6d6d;font-size:.78rem;margin-bottom:10px;min-height:18px;"></div>
+      <button id="login-btn" onclick="handleLogin()" style="
+        width:100%;background:#c0392b;border:none;color:#fff;
+        padding:11px;border-radius:8px;font-family:'DM Sans',sans-serif;
+        font-size:.9rem;font-weight:600;cursor:pointer;transition:background .15s;
+      ">Zaloguj się</button>
+    </div>
+    <div style="text-align:center;margin-top:16px;font-size:.72rem;color:var(--muted);">
+      🔒 Dane chronione — tylko zalogowani mają dostęp
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app" style="display:none;flex-direction:column;height:100dvh;overflow:hidden;">
+
+<!-- LOADER -->
+<div id="app-loader" style="
+  position:fixed;inset:0;z-index:9999;background:#0d0d0f;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+">
+  <div style="width:44px;height:44px;border:3px solid #2a2a32;border-top-color:#c0392b;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+  <div id="loader-msg" style="color:#6b6b80;font-size:.88rem;font-family:'DM Sans',sans-serif;text-align:center;padding:0 24px;white-space:pre-line;"></div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg);}}</style>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-block">
+    <span class="logo">Organizer Ady</span>
+    <span class="logo-sub">Social Media Manager</span>
+  </div>
+  <div class="header-clock">
+    <span class="clock-time" id="clock-time">--:--</span>
+    <span class="clock-date" id="clock-date">---</span>
+    <button onclick="handleLogout()" style="
+      margin-top:4px;background:transparent;border:none;
+      color:var(--muted);font-size:.62rem;cursor:pointer;
+      font-family:'DM Sans',sans-serif;padding:0;text-align:right;
+      transition:color .15s;
+    " onmouseover="this.style.color='#fa6d6d'" onmouseout="this.style.color='var(--muted)'">wyloguj</button>
+    <span style="font-size:.52rem;color:var(--muted);opacity:.45;text-align:right;margin-top:2px;letter-spacing:.3px;">v1.0.130326</span>
+  </div>
+</header>
+
+<!-- DRIVE STATUS BAR -->
+<div id="drive-status-bar" style="
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;
+  padding:5px 16px;background:var(--surface);border-bottom:1px solid var(--border);
+  min-height:34px;flex-shrink:0;
+">
+  <div id="drive-status"></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('calendar',this)">📅 Kalendarz</button>
+  <button class="tab" onclick="switchTab('notes',this)">📝 Notatki</button>
+  <button class="tab" onclick="switchTab('files',this)">📁 Pliki</button>
+  <button class="tab" onclick="switchTab('clients',this)">👥 Klienci</button>
+</div>
+
+<!-- APP GRID -->
+<div class="app" id="app-grid">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
+      <div class="sidebar-section-title">Planer Publikacji</div>
+      <div id="planer-list" style="display:flex;flex-direction:column;gap:5px;"></div>
+    </div>
+  </aside>
+
+  <!-- CALENDAR TAB -->
+  <main class="main" id="tab-calendar">
+    <div class="view-header">
+      <div class="cal-nav">
+        <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+        <button class="nav-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="cal-title" id="month-title"></div>
+    </div>
+
+    <!-- GRID VIEW -->
+    <div id="view-grid" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+      <div class="calendar-wrap">
+        <div class="weekdays">
+          <div class="weekday">Pon</div><div class="weekday">Wt</div>
+          <div class="weekday">Śr</div><div class="weekday">Czw</div>
+          <div class="weekday">Pt</div><div class="weekday">Sob</div>
+          <div class="weekday">Nd</div>
+        </div>
+        <div class="days-grid" id="days-grid"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- NOTES TAB -->
+  <main class="main" id="tab-notes" style="display:none;">
+    <div class="view-header">
+      <div class="cal-title">Notatki</div>
+      <button class="btn btn-primary btn-sm" onclick="addNote()">+ Notatka</button>
+    </div>
+    <div class="notes-wrap" id="notes-wrap"></div>
+  </main>
+
+  <!-- FILES TAB -->
+  <main class="main" id="tab-files" style="display:none;">
+    <div class="view-header">
+      <div class="cal-title">Pliki</div>
+    </div>
+    <div class="files-tab-wrap" id="files-tab-wrap"></div>
+  </main>
+
+  <!-- CLIENTS TAB -->
+  <main class="main" id="tab-clients" style="display:none;">
+    <div class="view-header">
+      <div class="cal-title">Klienci</div>
+      <button class="btn btn-primary btn-sm" onclick="addNewClient()">+ Klient</button>
+    </div>
+    <div class="clients-wrap" id="clients-wrap"></div>
+  </main>
+
+</div><!-- /app-grid -->
+
+<!-- DAY PANEL OVERLAY + PANEL -->
+<div class="panel-overlay" id="panel-overlay" onclick="closeDayPanel()"></div>
+<div class="day-panel" id="day-panel">
+  <!-- drag handle visible only on mobile -->
+  <div style="display:none;" class="day-panel-handle-wrap" id="day-panel-handle-wrap">
+    <div style="width:36px;height:4px;background:var(--border);border-radius:4px;margin:10px auto 0;"></div>
+  </div>
+  <div class="day-panel-header">
+    <div class="day-panel-title" id="day-panel-title"></div>
+    <button class="close-btn day-panel-header-close" onclick="closeDayPanel()">✕</button>
+  </div>
+  <div class="day-panel-body" id="day-panel-body"></div>
+  <div class="day-panel-footer"></div>
+</div>
+
+<!-- NOTE MODAL -->
+<div class="note-fullscreen" id="note-fullscreen" onclick="if(event.target===this)cancelNoteFS()">
+  <div class="note-fullscreen-inner">
+    <div class="note-fs-header">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;">Notatka</div>
+      <div style="font-size:.72rem;color:var(--muted);" id="note-fs-date"></div>
+    </div>
+    <div class="note-fs-body">
+      <input class="note-fs-title" id="note-fs-title" placeholder="Tytuł notatki…" oninput="saveNoteFS()">
+      <textarea class="note-fs-text" id="note-fs-text" placeholder="Wpisz treść notatki…" oninput="saveNoteFS()"></textarea>
+      <div class="note-photos-grid" id="note-photos-grid"></div>
+    </div>
+    <div class="note-fs-footer">
+      <button class="btn btn-sm" onclick="triggerNotePhoto()" title="Dodaj zdjęcie">📷</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteNoteFS()">Usuń</button>
+      <button class="btn btn-primary btn-sm" onclick="closeNoteFS()">Gotowe</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="note-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleNotePhoto(event)">
+
+<!-- PHOTO LIGHTBOX -->
+<div class="lightbox-overlay" id="lightbox-overlay">
+  <div class="lightbox">
+    <img id="lightbox-img" src="" alt="">
+    <div class="lightbox-actions">
+      <a id="lightbox-drive-btn" href="#" target="_blank" class="btn btn-sm" style="display:none;text-decoration:none;">☁️ Otwórz na Drive</a>
+      <button class="btn btn-sm" onclick="downloadLightboxPhoto()">⬇ Pobierz</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteLightboxPhoto()">Usuń</button>
+      <button class="btn btn-sm" onclick="closeLightbox()">✕ Zamknij</button>
+    </div>
+  </div>
+</div>
+
+<!-- POST MODAL -->
+<div class="modal-overlay" id="post-modal" onclick="if(event.target===this)closeModal('post-modal')">
+  <div class="modal">
+    <div class="modal-title" id="post-modal-title">Nowy post</div>
+
+    <div class="form-group">
+      <label>Klient</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select id="post-client" style="flex:1;"></select>
+        <button class="btn btn-sm" onclick="showInlineAddClient()" type="button" title="Dodaj klienta">＋</button>
+      </div>
+      <div id="inline-add-client" style="display:none;margin-top:7px;">
+        <div class="client-add-row">
+          <input type="text" id="new-client-name" placeholder="Nazwa klienta…">
+          <button class="btn btn-sm btn-primary" onclick="saveInlineClient()">Dodaj</button>
+          <button class="btn btn-sm" onclick="hideInlineAddClient()">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group"><label>Data</label><input type="date" id="post-date"></div>
+    <div class="form-group"><label>Temat / Tytuł</label><input type="text" id="post-title" placeholder="np. Reels – Kulisy treningu"></div>
+    <div class="form-group">
+      <label>Typ contentu</label>
+      <select id="post-type">
+        <option>Reels</option><option>Post</option><option>Story</option><option>Karuzela</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Notatki</label><textarea id="post-notes" placeholder="Opis, hashtagi, uwagi…"></textarea></div>
+    <div class="form-group"><label>Kolor</label><div class="color-picker-row" id="color-picker"></div></div>
+    <div class="form-group"><label>Przypomnienie</label><input type="time" id="post-reminder" value="09:00"></div>
+
+    <div class="form-group">
+      <label>Materiały (opcjonalnie)</label>
+      <div class="files-drop" onclick="document.getElementById('post-file-input').click()" id="post-files-drop">
+        📎 Dotknij aby dodać pliki<br><span style="font-size:.7rem;">grafiki, wideo</span>
+      </div>
+      <input type="file" id="post-file-input" multiple accept="image/*,video/*,*/*" style="display:none" onchange="handlePostModalFiles(event)">
+      <div class="file-list" id="post-file-list"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-sm" onclick="closeModal('post-modal')">Anuluj</button>
+      <button class="btn btn-primary btn-sm" onclick="savePost()">Zapisz</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal" onclick="if(event.target===this)closeModal('detail-modal')">
+  <div class="modal">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
+      <div id="detail-badge" class="detail-badge"></div>
+      <button class="close-btn" onclick="closeModal('detail-modal')">✕</button>
+    </div>
+    <div id="detail-title" style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:11px;"></div>
+    <div class="detail-field"><div class="detail-field-label">Klient</div><div class="detail-field-value" id="detail-client"></div></div>
+    <div class="detail-field"><div class="detail-field-label">Data</div><div class="detail-field-value" id="detail-date"></div></div>
+    <div class="detail-field"><div class="detail-field-label">Notatki</div><div class="detail-field-value" id="detail-notes"></div></div>
+    <div class="detail-field"><div class="detail-field-label">Przypomnienie</div><div class="detail-field-value" id="detail-reminder"></div></div>
+    <div style="margin-top:11px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <label style="display:block;">Materiały</label>
+        <button id="detail-dl-all-btn" class="btn btn-sm" style="font-size:.7rem;padding:3px 9px;display:none;" onclick="downloadAllFiles(viewingPostId)">⬇️ Pobierz wszystko</button>
+      </div>
+      <div class="files-drop" onclick="triggerFileUpload()">📎 Dotknij aby dodać pliki<br><span style="font-size:.7rem;">grafiki, wideo</span></div>
+      <input type="file" id="file-input" multiple accept="image/*,video/*" style="display:none" onchange="handleFiles(event)">
+      <div class="file-list" id="file-list"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-sm" onclick="editCurrentPost()">✏️ Edytuj</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteCurrentPost()">Usuń</button>
+      <button class="btn btn-primary btn-sm" onclick="closeModal('detail-modal')">Zamknij</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="client-fullscreen" id="client-fullscreen" onclick="if(event.target===this)cancelClientFS()">
+  <div class="client-fullscreen-inner">
+    <div class="note-fs-header">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;">Klient</div>
+      <div style="font-size:.72rem;color:var(--muted);" id="client-fs-label"></div>
+    </div>
+    <div class="client-fs-body">
+      <div class="client-fs-color-row">
+        <div class="client-fs-color-dot" id="client-fs-dot"></div>
+        <input class="note-fs-title" id="client-fs-name" placeholder="Nazwa klienta…" oninput="saveClientFS()">
+      </div>
+      <div class="client-fs-fields">
+        <div class="client-fs-field">
+          <label>📞 Telefon</label>
+          <input type="tel" id="client-fs-phone" placeholder="np. +48 600 000 000" oninput="saveClientFS()">
+        </div>
+        <div class="client-fs-field">
+          <label>📍 Adres</label>
+          <input type="text" id="client-fs-address" placeholder="np. ul. Kwiatowa 1, Warszawa" oninput="saveClientFS()">
+        </div>
+        <div class="client-fs-field">
+          <label>💳 Data płatności</label>
+          <input type="date" id="client-fs-payment" oninput="saveClientFS()">
+        </div>
+        <div class="client-fs-field">
+          <label>📝 Notatki</label>
+          <textarea id="client-fs-notes" rows="4" placeholder="Dodatkowe informacje…" oninput="saveClientFS()"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="client-fs-footer">
+      <button class="btn btn-sm btn-danger" onclick="deleteClientFS()">Usuń</button>
+      <button class="btn btn-primary btn-sm" onclick="closeClientFS()">Gotowe</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal" style="max-width:320px;">
+    <div class="modal-title" id="confirm-text">Czy na pewno?</div>
+    <div class="modal-actions">
+      <button class="btn btn-sm" onclick="confirmResolve(false)">Anuluj</button>
+      <button class="btn btn-sm btn-danger" onclick="confirmResolve(true)">Usuń</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let pendingFiles = []; // files staged in post modal before save
+
+// ── SUPABASE CONFIG ──
+const SUPABASE_URL = 'https://havmytlovqarokxzmivy.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhhdm15dGxvdnFhcm9reHptaXZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxOTU4OTgsImV4cCI6MjA4ODc3MTg5OH0.jXHXwKAd0TagInVNIX-qQnKBoFSw4sRvVuLvXWcIIcA';
+
+// ── GOOGLE DRIVE CONFIG ──
+const GDRIVE_CLIENT_ID = '829179792378-7plhbeddbli33hav6abuibao8ei4asf6.apps.googleusercontent.com';
+const GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+let gdriveToken = null;
+let gdriveFolderIds = {}; // { root, Posty, Notatki, Klienci }
+let gdriveReady = false;
+
+// ── SUPABASE AUTH STATE ──
+let sbSession = null; // holds { access_token, user }
+
+async function sbFetch(path, options={}) {
+  const token = sbSession?.access_token || SUPABASE_KEY;
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      'Prefer': options.prefer || 'return=representation',
+      ...options.headers
+    },
+    ...options
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+async function sbAuthSignIn(email, password) {
+  const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error_description || data.msg || 'Błąd logowania');
+  return data;
+}
+
+async function sbAuthSignOut() {
+  if (!sbSession) return;
+  await fetch(SUPABASE_URL + '/auth/v1/logout', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + sbSession.access_token }
+  });
+  sbSession = null;
+  localStorage.removeItem('sb_session');
+}
+
+async function sbAuthRefresh(refreshToken) {
+  const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken })
+  });
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+function sbSaveSession(session) {
+  sbSession = { access_token: session.access_token, refresh_token: session.refresh_token, user: session.user };
+  localStorage.setItem('sb_session', JSON.stringify(sbSession));
+}
+
+async function sbLoadSession() {
+  const raw = localStorage.getItem('sb_session');
+  if (!raw) return false;
+  try {
+    const s = JSON.parse(raw);
+    // Try to refresh token
+    const refreshed = await sbAuthRefresh(s.refresh_token);
+    if (refreshed && refreshed.access_token) {
+      sbSaveSession(refreshed);
+      return true;
+    }
+    localStorage.removeItem('sb_session');
+    return false;
+  } catch(e) { return false; }
+}
+
+// ── STATE ──
+let currentYear, currentMonth, currentView = 'grid', activeTab = 'calendar';
+let posts = [], clients = [], notes = [];
+let editingPostId = null, viewingPostId = null;
+let activePanelDate = null, editingNoteId = null, editingClientId = null;
+let _newNoteId = null, _newClientId = null;
+
+const COLORS = ['#7c6dfa','#fa6d9a','#6ddffa','#6dfa9a','#fad46d','#fa8d6d','#c46dfa','#fa6d6d'];
+const MONTH_NAMES = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec',
+                     'Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+const DOW_SHORT = ['Pon','Wt','Śr','Czw','Pt','Sob','Nd'];
+let selectedColor = COLORS[0];
+
+const _now = new Date();
+currentYear  = _now.getFullYear();
+currentMonth = _now.getMonth();
+
+
+// ── GOOGLE DRIVE AUTH (GIS popup — no redirect needed) ──
+let _gdriveTokenClient = null;
+let _gdriveRefreshTimer = null;
+
+function gdriveSignIn(silent = false) {
+  if (!window.google) {
+    if (!silent) showToast('⏳ Ładowanie Google API…');
+    setTimeout(() => gdriveSignIn(silent), 1000);
+    return;
+  }
+  if (!_gdriveTokenClient) {
+    _gdriveTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GDRIVE_CLIENT_ID,
+      scope: GDRIVE_SCOPES,
+      callback: (response) => {
+        if (response.error) {
+          if (!silent) showToast('❌ Błąd logowania: ' + response.error);
+          return;
+        }
+        gdriveToken = response.access_token;
+        const expiresIn = response.expires_in || 3600;
+        const exp = Date.now() + (expiresIn * 1000) - 60000;
+        localStorage.setItem('gdrive_token', gdriveToken);
+        localStorage.setItem('gdrive_token_exp', exp.toString());
+        localStorage.setItem('gdrive_connected', '1'); // remember user ever connected
+        if (!silent) {
+          showToast('✅ Google Drive połączony!');
+          gdriveEnsureFolders().catch(e => console.warn('Drive folders:', e));
+        }
+        renderDriveStatus();
+        gdriveScheduleRefresh(expiresIn);
+      }
+    });
+  }
+  _gdriveTokenClient.requestAccessToken({ prompt: silent ? 'none' : '' });
+}
+
+function gdriveScheduleRefresh(expiresInSeconds) {
+  clearTimeout(_gdriveRefreshTimer);
+  const refreshIn = Math.max((expiresInSeconds - 120) * 1000, 30000);
+  _gdriveRefreshTimer = setTimeout(() => {
+    if (gdriveToken) gdriveSignIn(true);
+  }, refreshIn);
+}
+
+// Auto-reconnect when tab becomes visible again (user returns to app)
+if (!window._driveVisibilityListenerAdded) {
+  window._driveVisibilityListenerAdded = true;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (!localStorage.getItem('gdrive_connected')) return; // user never connected
+    const exp = parseInt(localStorage.getItem('gdrive_token_exp') || '0');
+    if (!gdriveToken || Date.now() > exp - 30000) {
+      // token missing or about to expire — silently refresh
+      gdriveSignIn(true);
+    }
+  });
+}
+
+function gdriveSignOut() {
+  clearTimeout(_gdriveRefreshTimer);
+  if (gdriveToken && window.google) {
+    try { google.accounts.oauth2.revoke(gdriveToken, () => {}); } catch(e) {}
+  }
+  gdriveToken = null;
+  gdriveReady = false;
+  gdriveFolderIds = {};
+  _gdriveTokenClient = null;
+  localStorage.removeItem('gdrive_token');
+  localStorage.removeItem('gdrive_token_exp');
+  localStorage.removeItem('gdrive_connected');
+  renderDriveStatus();
+  showToast('Google Drive rozłączony');
+}
+
+function gdriveLoadToken() {
+  const token = localStorage.getItem('gdrive_token');
+  const exp   = parseInt(localStorage.getItem('gdrive_token_exp') || '0');
+  const everConnected = localStorage.getItem('gdrive_connected') === '1';
+  if (token && Date.now() < exp) {
+    gdriveToken = token;
+    const remainingMs = exp - Date.now() + 60000;
+    gdriveScheduleRefresh(Math.floor(remainingMs / 1000));
+    return true;
+  }
+  // token expired but user previously connected — try silent refresh
+  if (everConnected && window.google) {
+    setTimeout(() => gdriveSignIn(true), 800);
+  } else if (everConnected) {
+    // google API not loaded yet — retry after it loads
+    setTimeout(() => { if (window.google) gdriveSignIn(true); }, 2500);
+  }
+  return false;
+}
+
+function gdriveHandleCallback() { return false; }
+
+async function gdriveApiCall(url, options = {}) {
+  if (!gdriveToken) throw new Error('Brak tokenu Drive');
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Authorization': 'Bearer ' + gdriveToken,
+      ...(options.headers || {})
+    }
+  });
+  if (res.status === 401) {
+    gdriveSignOut();
+    throw new Error('Sesja Google wygasła. Zaloguj się ponownie.');
+  }
+  return res;
+}
+
+async function gdriveEnsureFolder(name, parentId) {
+  // Search for existing folder
+  const q = `name='${name}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`;
+  const res = await gdriveApiCall(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)`);
+  const data = await res.json();
+  if (data.files && data.files.length > 0) return data.files[0].id;
+  // Create folder
+  const create = await gdriveApiCall('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] })
+  });
+  const folder = await create.json();
+  return folder.id;
+}
+
+async function gdriveEnsureFolders() {
+  if (gdriveFolderIds.root) return;
+  // Get root folder id
+  const rootId = 'root';
+  const orgId = await gdriveEnsureFolder('ORGANIZER', rootId);
+  const postyId   = await gdriveEnsureFolder('Posty', orgId);
+  const notatId   = await gdriveEnsureFolder('Notatki', orgId);
+  const kliId     = await gdriveEnsureFolder('Klienci', orgId);
+  gdriveFolderIds = { root: orgId, Posty: postyId, Notatki: notatId, Klienci: kliId };
+}
+
+async function gdriveUploadFile(file, subfolder) {
+  await gdriveEnsureFolders();
+  const folderId = gdriveFolderIds[subfolder] || gdriveFolderIds.root;
+
+  const meta = JSON.stringify({ name: file.name, parents: [folderId] });
+  const form = new FormData();
+  form.append('metadata', new Blob([meta], { type: 'application/json' }));
+  form.append('file', file);
+
+  const res = await gdriveApiCall(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,webContentLink',
+    { method: 'POST', body: form }
+  );
+  const data = await res.json();
+  if (!data.id) throw new Error('Upload nieudany: ' + JSON.stringify(data));
+  return { driveId: data.id, name: data.name, webViewLink: data.webViewLink, webContentLink: data.webContentLink };
+}
+
+async function gdriveDeleteFile(driveId) {
+  if (!driveId) return;
+  try {
+    await gdriveApiCall(`https://www.googleapis.com/drive/v3/files/${driveId}`, { method: 'DELETE' });
+  } catch(e) { console.warn('Drive delete error:', e); }
+}
+
+function renderDriveStatus() {
+  const el = document.getElementById('drive-status');
+  if (!el) return;
+  if (gdriveToken) {
+    // Show connected state immediately, then fetch quota
+    el.innerHTML = `
+      <span id="drive-quota" style="color:var(--muted);font-size:.72rem;">Miejsce: …</span>
+      <span style="color:#6dfa9a;font-size:.75rem;">✓ Dysk połączony</span>
+      <button class="btn btn-sm" style="font-size:.7rem;padding:3px 8px;" onclick="gdriveSignOut()">Rozłącz</button>`;
+    hideDriveBanner();
+    // Fetch quota async
+    gdriveApiCall('https://www.googleapis.com/drive/v3/about?fields=storageQuota')
+      .then(r => r.json())
+      .then(data => {
+        const q = data.storageQuota;
+        if (!q) return;
+        const used  = parseInt(q.usage      || 0);
+        const total = parseInt(q.limit      || 0);
+        const usedGB  = (used  / 1073741824).toFixed(1);
+        const totalGB = total > 0 ? (total / 1073741824).toFixed(0) + ' GB' : '∞';
+        const qEl = document.getElementById('drive-quota');
+        if (qEl) qEl.innerHTML = `Miejsce: <strong style="color:var(--text);">${usedGB} GB / ${totalGB}</strong>`;
+      })
+      .catch(() => {
+        const qEl = document.getElementById('drive-quota');
+        if (qEl) qEl.style.display = 'none';
+      });
+  } else {
+    el.innerHTML = `<button class="btn btn-sm btn-primary" style="font-size:.75rem;" onclick="gdriveSignIn()">🔗 Połącz Google Drive</button>`;
+    showDriveBanner();
+  }
+}
+
+function showDriveBanner() {
+  const el = document.getElementById('drive-banner');
+  if (el) el.classList.add('show');
+}
+
+function hideDriveBanner() {
+  const el = document.getElementById('drive-banner');
+  if (el) el.classList.remove('show');
+}
+
+// ── INIT ──
+async function init() {
+  gdriveHandleCallback();
+  gdriveLoadToken();
+
+  showLoader('Sprawdzanie sesji…');
+
+  // Try to restore session
+  const hasSession = await sbLoadSession();
+  if (!hasSession) {
+    hideLoader();
+    showLoginScreen();
+    return;
+  }
+
+  await startApp();
+}
+
+async function startApp() {
+  showLoader('Łączenie z bazą danych…');
+  try {
+    await loadAll();
+    hideLoader();
+    showAppScreen();
+    renderSidebar();
+    renderCalendar();
+    renderNotes();
+    renderColorPicker();
+    startClock();
+    startRealtime();
+    if (gdriveToken) gdriveEnsureFolders().catch(e => console.warn('Drive folders init:', e));
+    renderDriveStatus();
+  } catch(e) {
+    showLoader('❌ Błąd połączenia. Sprawdź internet i odśwież stronę.\n\n' + e.message);
+    console.error(e);
+  }
+}
+
+function showLoginScreen() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('main-app').style.display = 'none';
+  setTimeout(() => document.getElementById('login-email').focus(), 100);
+}
+
+function showAppScreen() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+}
+
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+  if (!email || !password) { err.textContent = 'Wpisz email i hasło.'; return; }
+  btn.textContent = 'Logowanie…'; btn.disabled = true; err.textContent = '';
+  try {
+    const session = await sbAuthSignIn(email, password);
+    sbSaveSession(session);
+    await startApp();
+  } catch(e) {
+    err.textContent = e.message;
+    btn.textContent = 'Zaloguj się'; btn.disabled = false;
+  }
+}
+
+async function handleLogout() {
+  const ok = await confirmAsync('Wylogować się?');
+  if (!ok) return;
+  await sbAuthSignOut();
+  gdriveSignOut();
+  stopRealtime();
+  showLoginScreen();
+}
+
+function showLoader(msg) {
+  document.getElementById('loader-msg').textContent = msg;
+  document.getElementById('app-loader').style.display = 'flex';
+}
+function hideLoader() {
+  document.getElementById('app-loader').style.display = 'none';
+}
+
+async function ensureTables() {
+  // Create tables via RPC if not exist — use raw SQL through Supabase
+  // Tables are created in Supabase dashboard; here we just verify connection
+  await sbFetch('posts?limit=1', {method:'GET', prefer:'return=representation'});
+}
+
+// ── REALTIME ──
+let realtimeWs = null;
+let realtimeHeartbeat = null;
+let realtimeDebounce = null;
+let _rtRef = 0;
+
+function startRealtime() {
+  stopRealtime();
+  const wsUrl = SUPABASE_URL.replace('https://', 'wss://')
+    + '/realtime/v1/websocket?apikey=' + SUPABASE_KEY + '&vsn=1.0.0';
+
+  try { realtimeWs = new WebSocket(wsUrl); }
+  catch(e) { console.warn('Realtime WS init error:', e); return; }
+
+  realtimeWs.onopen = () => {
+    const ref = String(++_rtRef);
+    // Supabase Realtime v2: single channel with postgres_changes for all tables
+    realtimeWs.send(JSON.stringify({
+      topic: 'realtime:db-changes',
+      event: 'phx_join',
+      payload: {
+        config: {
+          postgres_changes: [
+            { event: '*', schema: 'public', table: 'posts' },
+            { event: '*', schema: 'public', table: 'clients' },
+            { event: '*', schema: 'public', table: 'notes' }
+          ]
+        },
+        access_token: sbSession?.access_token || SUPABASE_KEY
+      },
+      ref
+    }));
+
+    // Heartbeat every 20s to keep connection alive
+    realtimeHeartbeat = setInterval(() => {
+      if (realtimeWs?.readyState === WebSocket.OPEN) {
+        realtimeWs.send(JSON.stringify({
+          topic: 'phoenix', event: 'heartbeat', payload: {}, ref: 'hb'
+        }));
+      }
+    }, 20000);
+  };
+
+  realtimeWs.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      // Supabase v2 sends event='postgres_changes' with payload.data.type = INSERT/UPDATE/DELETE
+      const isDbChange = msg.event === 'postgres_changes';
+      if (!isDbChange) return;
+
+      // Debounce: many rapid changes → single reload
+      clearTimeout(realtimeDebounce);
+      realtimeDebounce = setTimeout(async () => {
+        try {
+          await loadAll();
+          renderSidebar();
+          renderCalendar();
+          renderNotes();
+          if (activeTab === 'files') renderFilesTab();
+          if (activeTab === 'clients') renderClientsTab();
+        } catch(err) { console.warn('Realtime reload error:', err); }
+      }, 400);
+    } catch(err) { console.warn('Realtime parse error:', err); }
+  };
+
+  realtimeWs.onclose = (ev) => {
+    clearInterval(realtimeHeartbeat);
+    clearTimeout(realtimeDebounce);
+    // Auto-reconnect after 4s if still logged in
+    if (sbSession) setTimeout(startRealtime, 4000);
+  };
+
+  realtimeWs.onerror = () => realtimeWs?.close();
+}
+
+function stopRealtime() {
+  clearInterval(realtimeHeartbeat);
+  clearTimeout(realtimeDebounce);
+  if (realtimeWs) {
+    realtimeWs.onclose = null;
+    realtimeWs.onerror = null;
+    realtimeWs.close();
+    realtimeWs = null;
+  }
+}
+
+async function loadAll() {
+  const [p, c, n] = await Promise.all([
+    sbFetch('posts?order=date.asc'),
+    sbFetch('clients?order=created_at.asc'),
+    sbFetch('notes?order=created_at.asc'),
+  ]);
+  posts   = p.map(row => ({
+    id: row.id, clientId: row.client_id, clientName: row.client_name,
+    date: row.date, title: row.title, type: row.type,
+    notes: row.notes, color: row.color, reminder: row.reminder,
+    files: row.files || []
+  }));
+  clients = c.map(row => ({
+    id: row.id, name: row.name, color: row.color,
+    phone: row.phone||'', address: row.address||'',
+    paymentDate: row.payment_date||'', notes: row.notes||''
+  }));
+  notes = n.map(row => ({
+    id: row.id, title: row.title, body: row.body,
+    done: row.done, created: row.created_at,
+    photos: row.photos || []
+  }));
+}
+
+// ── TOAST ──
+let _toastTimer = null;
+function showToast(msg) {
+  let el = document.getElementById('app-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'app-toast';
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+init();
+
+// ── CONFIRM (replaces native confirm() blocked on iOS) ──
+let _confirmResolve = null;
+function confirmAsync(msg) {
+  document.getElementById('confirm-text').textContent = msg;
+  openModal('confirm-modal');
+  return new Promise(res => { _confirmResolve = res; });
+}
+function confirmResolve(val) {
+  closeModal('confirm-modal');
+  if (_confirmResolve) { _confirmResolve(val); _confirmResolve = null; }
+}
+
+// ── CLOCK ──
+function startClock() {
+  function tick() {
+    const now = new Date();
+    const t = now.toLocaleTimeString('pl-PL',{timeZone:'Europe/Warsaw',hour:'2-digit',minute:'2-digit'});
+    const d = now.toLocaleDateString('pl-PL',{timeZone:'Europe/Warsaw',day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('clock-time').textContent = t;
+    document.getElementById('clock-date').textContent = d;
+  }
+  tick();
+  setInterval(tick, 10000);
+}
+
+// ── TABS ──
+function switchTab(tab, el) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else {
+    const idx = ['calendar','notes','files','clients'].indexOf(tab);
+    document.querySelectorAll('.tab')[idx]?.classList.add('active');
+  }
+  document.getElementById('tab-calendar').style.display = tab === 'calendar' ? 'flex' : 'none';
+  document.getElementById('tab-notes').style.display    = tab === 'notes'    ? 'flex' : 'none';
+  document.getElementById('tab-files').style.display    = tab === 'files'    ? 'flex' : 'none';
+  document.getElementById('tab-clients').style.display  = tab === 'clients'  ? 'flex' : 'none';
+  const sidebar = document.getElementById('sidebar');
+  const grid    = document.getElementById('app-grid');
+  if (tab === 'calendar') {
+    sidebar.style.display = '';
+    grid.style.gridTemplateColumns = '';
+  } else {
+    sidebar.style.display = 'none';
+    grid.style.gridTemplateColumns = '1fr';
+  }
+  if (tab === 'files') renderFilesTab();
+  if (tab === 'clients') renderClientsTab();
+}
+
+// ── SWIPE GESTURES (iPhone/touch) ──
+(function initSwipe() {
+  const TAB_ORDER = ['calendar','notes','files','clients'];
+  let sx = 0, sy = 0, st = 0;
+  document.addEventListener('touchstart', e => {
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    const dt = Date.now() - st;
+    if (dt > 350 || Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.65) return;
+    // Don't swipe when day panel or note/client editor is open
+    if (document.getElementById('day-panel')?.classList.contains('open')) return;
+    if (document.getElementById('note-fullscreen')?.classList.contains('open')) return;
+    if (document.getElementById('client-fullscreen')?.classList.contains('open')) return;
+    const cur = TAB_ORDER.indexOf(activeTab);
+    if (dx < 0 && cur < TAB_ORDER.length - 1) switchTab(TAB_ORDER[cur + 1], null);
+    else if (dx > 0 && cur > 0) switchTab(TAB_ORDER[cur - 1], null);
+  }, { passive: true });
+})();
+
+// ── CALENDAR GRID ──
+function renderCalendar() {
+  document.getElementById('month-title').textContent = `${MONTH_NAMES[currentMonth]} ${currentYear}`;
+
+  const firstDay   = new Date(currentYear, currentMonth, 1);
+  let startDow     = firstDay.getDay();
+  startDow         = startDow === 0 ? 6 : startDow - 1;
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const daysInPrev  = new Date(currentYear, currentMonth, 0).getDate();
+  const totalCells  = Math.ceil((startDow + daysInMonth) / 7) * 7;
+  const MAX_CHIPS   = 2;
+  const grid        = document.getElementById('days-grid');
+  grid.innerHTML    = '';
+
+  for (let i = 0; i < totalCells; i++) {
+    let day, mon, yr, isOther = false;
+    if (i < startDow) {
+      day = daysInPrev - startDow + i + 1; mon = currentMonth - 1; yr = currentYear;
+      if (mon < 0) { mon = 11; yr--; } isOther = true;
+    } else if (i >= startDow + daysInMonth) {
+      day = i - startDow - daysInMonth + 1; mon = currentMonth + 1; yr = currentYear;
+      if (mon > 11) { mon = 0; yr++; } isOther = true;
+    } else {
+      day = i - startDow + 1; mon = currentMonth; yr = currentYear;
+    }
+
+    const dateStr  = `${yr}-${pad(mon+1)}-${pad(day)}`;
+    const isToday  = dateStr === todayStr();
+    const dayPosts = posts.filter(p => p.date === dateStr);
+
+    const cell = document.createElement('div');
+    cell.className = 'day-cell' + (isOther?' other-month':'') + (isToday?' today':'');
+
+    // day number row — with +N badge at top-right if >MAX_CHIPS posts
+    const numRow = document.createElement('div');
+    numRow.className = 'day-number';
+    const dn = document.createElement('span'); dn.className = 'dn'; dn.textContent = day;
+    numRow.appendChild(dn);
+    if (dayPosts.length > MAX_CHIPS) {
+      const badge = document.createElement('span');
+      badge.className = 'count-badge';
+      badge.textContent = '+' + (dayPosts.length - MAX_CHIPS);
+      numRow.appendChild(badge);
+    } else if (dayPosts.length === 0) {
+      const hint = document.createElement('span'); hint.className = 'add-hint'; hint.textContent = '+';
+      numRow.appendChild(hint);
+    }
+    cell.appendChild(numRow);
+
+    // chips — always show up to MAX_CHIPS
+    dayPosts.slice(0, MAX_CHIPS).forEach(post => {
+      const chip = document.createElement('div');
+      chip.className = 'post-chip';
+      chip.style.background = hex2rgba(post.color, .18);
+      chip.style.color = post.color;
+      chip.innerHTML = `<span class="chip-dot"></span><span class="chip-text">${post.clientName} – ${post.title}</span>`;
+      chip.onclick = e => { e.stopPropagation(); openDayPanel(dateStr); };
+      cell.appendChild(chip);
+    });
+
+    // CLICK LOGIC: empty → new post | has posts → always day panel
+    if (dayPosts.length === 0) {
+      cell.onclick = () => openNewPost(dateStr);
+    } else {
+      cell.onclick = () => openDayPanel(dateStr);
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+// ── DAY PANEL ──
+function openDayPanel(dateStr) {
+  activePanelDate = dateStr;
+  const [yr, mn, dy] = dateStr.split('-');
+  document.getElementById('day-panel-title').textContent =
+    `${parseInt(dy)} ${MONTH_NAMES[parseInt(mn)-1]} ${yr}`;
+
+  const body = document.getElementById('day-panel-body');
+  body.innerHTML = '';
+  const dayPosts = posts.filter(p => p.date === dateStr);
+
+  if (!dayPosts.length) {
+    body.innerHTML = '<div style="color:var(--muted);font-size:.83rem;padding:8px 0;">Brak postów na ten dzień.</div>';
+  } else {
+  dayPosts.forEach(post => {
+      const card = document.createElement('div');
+      card.className = 'post-card';
+      card.style.borderLeftColor = post.color;
+      card.innerHTML = `
+        <div class="post-card-top">
+          <div class="post-card-title">${escHtml(post.title)}</div>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <span class="type-badge" style="background:${hex2rgba(post.color,.18)};color:${post.color}">${post.type}</span>
+            <button class="panel-delete-btn" title="Usuń post" data-pid="${post.id}">🗑️</button>
+          </div>
+        </div>
+        <div class="post-card-meta">
+          <span class="chip-dot" style="background:${post.color}"></span>
+          <span>${escHtml(post.clientName)}</span>
+          ${post.reminder ? `<span>⏰ ${post.reminder}</span>` : ''}
+          ${post.files?.length ? `<span>📎 ${post.files.length}</span>` : ''}
+        </div>`;
+      card.onclick = (e) => {
+        if (e.target.closest('.panel-delete-btn')) {
+          const pid = e.target.closest('.panel-delete-btn').dataset.pid;
+          deletePanelPost(pid);
+          return;
+        }
+        openDetail(post.id);
+      };
+      body.appendChild(card);
+    });
+  }
+
+  // Dashed "add post" tile always at the bottom
+  const addTile = document.createElement('div');
+  addTile.className = 'add-post-tile';
+  addTile.textContent = '+ Dodaj post na ten dzień';
+  addTile.onclick = () => newPostFromPanel();
+  body.appendChild(addTile);
+
+  document.getElementById('day-panel').classList.add('open');
+  document.getElementById('panel-overlay').classList.add('open');
+}
+
+function closeDayPanel() {
+  document.getElementById('day-panel').classList.remove('open');
+  document.getElementById('panel-overlay').classList.remove('open');
+}
+
+async function deletePanelPost(id) {
+  const ok = await confirmAsync('Usunąć ten post?');
+  if (!ok) return;
+  const post = posts.find(p=>p.id===id);
+  const dateStr = post?.date;
+  await deletePost(id);
+  posts = posts.filter(p=>p.id!==id);
+  renderCalendar();
+  renderSidebar();
+  const remaining = posts.filter(p=>p.date===dateStr);
+  if (remaining.length === 0) closeDayPanel();
+  else openDayPanel(dateStr);
+}
+
+function newPostFromPanel() {
+  closeDayPanel();
+  openNewPost(activePanelDate);
+}
+
+
+// ── SIDEBAR — PLANER PUBLIKACJI ──
+function renderSidebar() {
+  const list = document.getElementById('planer-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const today = todayStr();
+  const now = new Date();
+  const monthEnd = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(new Date(now.getFullYear(), now.getMonth()+1, 0).getDate())}`;
+  const upcoming = posts
+    .filter(p => p.date >= today && p.date <= monthEnd)
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  if (!upcoming.length) {
+    list.innerHTML = '<div class="planer-empty">Brak zaplanowanych<br>publikacji 🎉</div>';
+    return;
+  }
+
+  upcoming.forEach(post => {
+    const client = clients.find(c=>c.id===post.clientId);
+    const color = post.color || (client?.color) || '#888';
+
+    // Calculate time label
+    const postDate = new Date(post.date); postDate.setHours(0,0,0,0);
+    const now = new Date(); now.setHours(0,0,0,0);
+    const diffDays = Math.round((postDate - now) / 86400000);
+    let timeLabel = '', timeClass = '';
+    if (diffDays === 0) { timeLabel = 'Dziś'; timeClass = 'today'; }
+    else if (diffDays === 1) { timeLabel = 'Jutro'; timeClass = 'soon'; }
+    else if (diffDays <= 7) { timeLabel = `Za ${diffDays} dni`; timeClass = 'soon'; }
+    else {
+      const [y,m,d] = post.date.split('-');
+      timeLabel = `${parseInt(d)} ${MONTH_NAMES[parseInt(m)-1].toLowerCase().slice(0,3)}`;
+      timeClass = '';
+    }
+
+    const tile = document.createElement('div');
+    tile.className = 'planer-tile';
+    tile.style.borderLeftColor = color;
+    tile.innerHTML = `
+      <div class="planer-tile-top">
+        <span class="planer-tile-dot" style="background:${color}"></span>
+        <span class="planer-tile-name">${escHtml(post.clientName)} – ${escHtml(post.type)}</span>
+      </div>
+      <div class="planer-tile-time ${timeClass}">⏱ ${timeLabel}${post.title ? ` · <span style="color:var(--muted);font-size:.64rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px;">${escHtml(post.title)}</span>` : ''}</div>`;
+    tile.onclick = () => openDetail(post.id);
+    list.appendChild(tile);
+  });
+}
+
+async function deleteClient(id) {
+  const client = clients.find(c=>c.id===id); if(!client) return;
+  const ok = await confirmAsync(`Usunąć klienta "${client.name}"?`);
+  if (!ok) return;
+  await deleteClientDB(id);
+  clients = clients.filter(c=>c.id!==id);
+  renderSidebar(); populateClientSelect();
+}
+
+async function addClientSidebar() {
+  const name = prompt('Nazwa klienta:'); if (!name?.trim()) return;
+  const c = {id:Date.now().toString(), name:name.trim(), color:COLORS[clients.length % COLORS.length], phone:'', address:'', paymentDate:'', notes:''};
+  clients.push(c);
+  await upsertClient(c);
+  renderSidebar(); populateClientSelect();
+}
+
+// ── INLINE ADD CLIENT (inside post modal) ──
+function showInlineAddClient() {
+  document.getElementById('inline-add-client').style.display = 'block';
+  document.getElementById('new-client-name').focus();
+}
+function hideInlineAddClient() {
+  document.getElementById('inline-add-client').style.display = 'none';
+  document.getElementById('new-client-name').value = '';
+}
+async function saveInlineClient() {
+  const name = document.getElementById('new-client-name').value.trim();
+  if (!name) return;
+  const c = {id:Date.now().toString(), name, color:COLORS[clients.length % COLORS.length], phone:'', address:'', paymentDate:'', notes:''};
+  clients.push(c);
+  await upsertClient(c);
+  renderSidebar();
+  populateClientSelect();
+  document.getElementById('post-client').value = c.id;
+  hideInlineAddClient();
+}
+
+// ── CLIENTS TAB ──
+function getPaymentStatus(paymentDateStr) {
+  if (!paymentDateStr) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const pay   = new Date(paymentDateStr); pay.setHours(0,0,0,0);
+  const diff  = Math.ceil((pay - today) / 86400000);
+  if (diff > 0)  return { type:'countdown', days: diff };
+  if (diff === 0) return { type:'today' };
+  return { type:'overdue', days: Math.abs(diff) };
+}
+
+function advancePaymentMonth(paymentDateStr) {
+  // Zachowaj oryginalny dzień miesiąca, ale przesuń od DZIŚ (nie od daty zaległości)
+  const origDay = new Date(paymentDateStr).getDate();
+  const next = new Date(); next.setHours(0,0,0,0);
+  next.setDate(1);
+  next.setMonth(next.getMonth() + 1);
+  const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+  next.setDate(Math.min(origDay, lastDay));
+  return next.toISOString().split('T')[0];
+}
+
+async function markPaymentDone(clientId) {
+  const c = clients.find(cl=>cl.id===clientId); if(!c) return;
+  c.paymentDate = advancePaymentMonth(c.paymentDate);
+  await upsertClient(c);
+  renderClientsTab();
+}
+
+function renderClientsTab() {
+  const wrap = document.getElementById('clients-wrap');
+  wrap.innerHTML = '';
+  if (!clients.length) {
+    wrap.innerHTML = '<div class="client-card-empty">👥 Brak klientów.<br>Kliknij "+ Klient" aby dodać pierwszego.</div>';
+    return;
+  }
+  clients.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'client-card';
+
+    // Build payment section
+    let payHTML = '';
+    const ps = getPaymentStatus(c.paymentDate);
+    if (ps) {
+      if (ps.type === 'countdown') {
+        payHTML = `<div class="client-card-field">
+          <span>💳</span>
+          <span class="client-payment-badge ok">✓ Płatność za ${ps.days} ${ps.days===1?'dzień':'dni'}</span>
+        </div>`;
+      } else if (ps.type === 'today') {
+        payHTML = `<div class="client-card-field client-pay-row">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span>💳</span>
+            <span class="client-payment-badge soon">📅 Dziś płatność!</span>
+          </div>
+          <button class="pay-done-btn" onclick="event.stopPropagation();markPaymentDone('${c.id}')">✓ Zapłacono</button>
+        </div>`;
+      } else if (ps.type === 'overdue') {
+        payHTML = `<div class="client-card-field client-pay-row">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span>💳</span>
+            <span class="client-payment-badge overdue">⚠ Zaległość ${ps.days} ${ps.days===1?'dzień':'dni'}</span>
+          </div>
+          <button class="pay-done-btn" onclick="event.stopPropagation();markPaymentDone('${c.id}')">✓ Zapłacono</button>
+        </div>`;
+      }
+    }
+
+    card.innerHTML = `
+      <div class="client-card-top">
+        <span class="client-card-dot" style="background:${c.color}"></span>
+        <span class="client-card-name">${escHtml(c.name)}</span>
+      </div>
+      <div class="client-card-fields">
+        ${c.phone   ? `<div class="client-card-field"><span>📞</span><span>${escHtml(c.phone)}</span></div>` : ''}
+        ${c.address ? `<div class="client-card-field"><span>📍</span><span>${escHtml(c.address)}</span></div>` : ''}
+        ${payHTML}
+        ${c.notes   ? `<div class="client-card-field"><span>📝</span><span>${escHtml(c.notes.substring(0,60))}${c.notes.length>60?'…':''}</span></div>` : ''}
+        ${!c.phone && !c.address && !c.paymentDate && !c.notes ? '<div style="color:var(--muted);font-size:.75rem;margin-top:2px;">Dotknij aby uzupełnić dane</div>' : ''}
+      </div>`;
+    card.style.cursor = 'pointer';
+    card.onclick = () => openClientFS(c.id);
+    wrap.appendChild(card);
+  });
+}
+
+async function addNewClient() {
+  const newC = {
+    id: Date.now().toString(),
+    name: 'Nowy klient',
+    color: COLORS[clients.length % COLORS.length],
+    phone: '', address: '', paymentDate: '', notes: ''
+  };
+  clients.push(newC);
+  await upsertClient(newC);
+  renderSidebar();
+  renderClientsTab();
+  _newClientId = newC.id;
+  openClientFS(newC.id);
+}
+
+async function cancelClientFS() {
+  if (editingClientId && editingClientId === _newClientId) {
+    const c = clients.find(cl=>cl.id===editingClientId);
+    const isDefault = !c || (c.name === 'Nowy klient' && !c.phone && !c.address && !c.paymentDate && !c.notes);
+    if (isDefault) {
+      const idToDel = editingClientId;
+      document.getElementById('client-fullscreen').classList.remove('open');
+      editingClientId = null; _newClientId = null;
+      await deleteClientDB(idToDel);
+      clients = clients.filter(cl=>cl.id!==idToDel);
+      renderClientsTab();
+      renderSidebar();
+      populateClientSelect();
+      return;
+    }
+  }
+  _newClientId = null;
+  closeClientFS();
+}
+
+function openClientFS(id) {
+  const c = clients.find(cl=>cl.id===id); if(!c) return;
+  editingClientId = id;
+  document.getElementById('client-fs-name').value    = c.name    || '';
+  document.getElementById('client-fs-phone').value   = c.phone   || '';
+  document.getElementById('client-fs-address').value = c.address || '';
+  document.getElementById('client-fs-payment').value = c.paymentDate || '';
+  document.getElementById('client-fs-notes').value   = c.notes   || '';
+  document.getElementById('client-fs-dot').style.background = c.color;
+  document.getElementById('client-fs-label').textContent = c.name;
+  document.getElementById('client-fullscreen').classList.add('open');
+  setTimeout(() => document.getElementById('client-fs-name').focus(), 100);
+}
+
+function closeClientFS() {
+  document.getElementById('client-fullscreen').classList.remove('open');
+  editingClientId = null;
+  renderClientsTab();
+  renderSidebar();
+}
+
+async function saveClientFS() {
+  if (!editingClientId) return;
+  const c = clients.find(cl=>cl.id===editingClientId); if(!c) return;
+  c.name        = document.getElementById('client-fs-name').value    || 'Klient';
+  c.phone       = document.getElementById('client-fs-phone').value;
+  c.address     = document.getElementById('client-fs-address').value;
+  c.paymentDate = document.getElementById('client-fs-payment').value;
+  c.notes       = document.getElementById('client-fs-notes').value;
+  document.getElementById('client-fs-dot').style.background = c.color;
+  document.getElementById('client-fs-label').textContent = c.name;
+  await upsertClient(c);
+}
+
+async function deleteClientFS() {
+  if (!editingClientId) return;
+  const c = clients.find(cl=>cl.id===editingClientId); if(!c) return;
+  const ok = await confirmAsync(`Usunąć klienta "${c.name}"?`);
+  if (!ok) return;
+  const idToDel = editingClientId;
+  document.getElementById('client-fullscreen').classList.remove('open');
+  editingClientId = null;
+  await deleteClientDB(idToDel);
+  clients = clients.filter(cl=>cl.id!==idToDel);
+  renderSidebar();
+  renderClientsTab();
+  populateClientSelect();
+}
+
+// ── NOTES ──
+function renderNotes() {
+  const wrap = document.getElementById('notes-wrap');
+  const ordered = [...notes.filter(n=>!n.done), ...notes.filter(n=>n.done)];
+  wrap.innerHTML = '';
+
+  ordered.forEach(note => {
+    const card = document.createElement('div');
+    card.className = 'note-card' + (note.done ? ' done' : '');
+    card.dataset.id = note.id;
+
+    // drag handle (3 lines icon)
+    const handle = document.createElement('div');
+    handle.className = 'note-drag-handle';
+    handle.innerHTML = '<span></span><span></span><span></span>';
+
+    const preview = document.createElement('div');
+    preview.className = 'note-preview';
+    const photoIcon = (note.photos && note.photos.length > 0)
+      ? `<span title="${note.photos.length} zdjęcie/zdjęcia" style="margin-left:5px;font-size:.78rem;opacity:.7;">📷${note.photos.length > 1 ? note.photos.length : ''}</span>`
+      : '';
+    preview.innerHTML = `
+      <div class="note-preview-title">${escHtml(note.title) || '<span style="color:var(--muted)">Bez tytułu</span>'}${photoIcon}</div>
+      <div class="note-preview-body">${escHtml(note.body) || '<span style="color:var(--muted)">Brak treści…</span>'}</div>
+      <div class="note-preview-date">${formatNoteDate(note.created)}</div>`;
+
+    card.appendChild(handle);
+    card.appendChild(preview);
+    card.onclick = () => openNoteFS(note.id);
+
+    // ── DRAG & DROP (mouse) ──
+    handle.addEventListener('mousedown', e => { e.stopPropagation(); startDrag(e, card); });
+    // ── LONG PRESS (touch) ──
+    let longPressTimer = null;
+    handle.addEventListener('touchstart', e => {
+      e.stopPropagation();
+      longPressTimer = setTimeout(() => { startDragTouch(e, card); }, 50);
+    }, {passive:true});
+    handle.addEventListener('touchend', () => { clearTimeout(longPressTimer); }, {passive:true});
+
+    wrap.appendChild(card);
+  });
+
+  if (!notes.length) {
+    wrap.innerHTML = '<div style="color:var(--muted);font-size:.83rem;padding:8px 0;">Brak notatek. Dodaj pierwszą!</div>';
+  }
+}
+
+// ── DRAG & DROP LOGIC ──
+let dragSrc = null, dragGhost = null, dragOffsetY = 0;
+
+function startDrag(e, card) {
+  dragSrc = card;
+  card.classList.add('dragging');
+  const rect = card.getBoundingClientRect();
+  dragOffsetY = e.clientY - rect.top;
+
+  // Ghost
+  dragGhost = card.cloneNode(true);
+  dragGhost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;
+    width:${rect.width}px;z-index:9999;pointer-events:none;opacity:.85;
+    box-shadow:0 12px 40px rgba(0,0,0,.5);border-radius:10px;transition:none;`;
+  document.body.appendChild(dragGhost);
+
+  document.addEventListener('mousemove', onDragMove);
+  document.addEventListener('mouseup', onDragEnd);
+}
+
+function onDragMove(e) {
+  if (!dragGhost) return;
+  dragGhost.style.top = (e.clientY - dragOffsetY) + 'px';
+
+  // Find target card
+  const cards = [...document.querySelectorAll('#notes-wrap .note-card:not(.dragging)')];
+  document.querySelectorAll('.note-card').forEach(c => c.classList.remove('drag-over'));
+  const target = cards.find(c => {
+    const r = c.getBoundingClientRect();
+    return e.clientY >= r.top && e.clientY <= r.bottom;
+  });
+  if (target) target.classList.add('drag-over');
+}
+
+function onDragEnd(e) {
+  document.removeEventListener('mousemove', onDragMove);
+  document.removeEventListener('mouseup', onDragEnd);
+  if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+
+  const cards = [...document.querySelectorAll('#notes-wrap .note-card:not(.dragging)')];
+  const target = cards.find(c => c.classList.contains('drag-over'));
+  document.querySelectorAll('.note-card').forEach(c => { c.classList.remove('dragging','drag-over'); });
+
+  if (target && dragSrc && target !== dragSrc) {
+    const srcId  = dragSrc.dataset.id;
+    const tgtId  = target.dataset.id;
+    const srcIdx = notes.findIndex(n=>n.id===srcId);
+    const tgtIdx = notes.findIndex(n=>n.id===tgtId);
+    if (srcIdx !== -1 && tgtIdx !== -1) {
+      const [item] = notes.splice(srcIdx, 1);
+      notes.splice(tgtIdx, 0, item);
+      saveNotes();
+    }
+  }
+  dragSrc = null;
+  renderNotes();
+}
+
+// ── TOUCH DRAG ──
+let touchDragCard = null, touchGhost = null, touchOffY = 0;
+
+function startDragTouch(e, card) {
+  touchDragCard = card;
+  card.classList.add('dragging');
+  const touch = e.touches[0];
+  const rect = card.getBoundingClientRect();
+  touchOffY = touch.clientY - rect.top;
+
+  touchGhost = card.cloneNode(true);
+  touchGhost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;
+    width:${rect.width}px;z-index:9999;pointer-events:none;opacity:.85;
+    box-shadow:0 12px 40px rgba(0,0,0,.5);border-radius:10px;transition:none;`;
+  document.body.appendChild(touchGhost);
+
+  document.addEventListener('touchmove', onTouchMove, {passive:false});
+  document.addEventListener('touchend', onTouchEnd);
+}
+
+function onTouchMove(e) {
+  if (!touchGhost) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  touchGhost.style.top = (touch.clientY - touchOffY) + 'px';
+
+  const cards = [...document.querySelectorAll('#notes-wrap .note-card:not(.dragging)')];
+  document.querySelectorAll('.note-card').forEach(c => c.classList.remove('drag-over'));
+  const target = cards.find(c => {
+    const r = c.getBoundingClientRect();
+    return touch.clientY >= r.top && touch.clientY <= r.bottom;
+  });
+  if (target) target.classList.add('drag-over');
+}
+
+function onTouchEnd(e) {
+  document.removeEventListener('touchmove', onTouchMove);
+  document.removeEventListener('touchend', onTouchEnd);
+  if (touchGhost) { touchGhost.remove(); touchGhost = null; }
+
+  const cards = [...document.querySelectorAll('#notes-wrap .note-card:not(.dragging)')];
+  const target = cards.find(c => c.classList.contains('drag-over'));
+  document.querySelectorAll('.note-card').forEach(c => { c.classList.remove('dragging','drag-over'); });
+
+  if (target && touchDragCard && target !== touchDragCard) {
+    const srcId  = touchDragCard.dataset.id;
+    const tgtId  = target.dataset.id;
+    const srcIdx = notes.findIndex(n=>n.id===srcId);
+    const tgtIdx = notes.findIndex(n=>n.id===tgtId);
+    if (srcIdx !== -1 && tgtIdx !== -1) {
+      const [item] = notes.splice(srcIdx, 1);
+      notes.splice(tgtIdx, 0, item);
+      saveNotes();
+    }
+  }
+  touchDragCard = null;
+  renderNotes();
+}
+
+async function addNote() {
+  const note = {id:Date.now().toString(), title:'', body:'', done:false, created:todayStr(), photos:[]};
+  notes.unshift(note);
+  await upsertNote(note);
+  renderNotes();
+  _newNoteId = note.id;
+  openNoteFS(note.id);
+}
+
+async function cancelNoteFS() {
+  if (editingNoteId && editingNoteId === _newNoteId) {
+    const n = notes.find(n=>n.id===editingNoteId);
+    const isEmpty = !n || (!n.title?.trim() && !n.body?.trim() && !(n.photos?.length));
+    if (isEmpty) {
+      const idToDel = editingNoteId;
+      document.getElementById('note-fullscreen').classList.remove('open');
+      editingNoteId = null; _newNoteId = null;
+      await deleteNoteDB(idToDel);
+      notes = notes.filter(n=>n.id!==idToDel);
+      renderNotes();
+      return;
+    }
+  }
+  _newNoteId = null;
+  closeNoteFS();
+}
+
+async function toggleNote(id) {
+  const n = notes.find(n=>n.id===id); if(!n) return;
+  n.done = !n.done;
+  await upsertNote(n);
+  renderNotes();
+}
+
+async function deleteNoteCard(id) {
+  const ok = await confirmAsync('Usunąć notatkę?');
+  if (!ok) return;
+  await deleteNoteDB(id);
+  notes = notes.filter(n=>n.id!==id);
+  renderNotes();
+}
+
+// ── NOTE FULLSCREEN ──
+function openNoteFS(id) {
+  const note = notes.find(n=>n.id===id); if(!note) return;
+  editingNoteId = id;
+  document.getElementById('note-fs-title').value = note.title || '';
+  document.getElementById('note-fs-text').value  = note.body  || '';
+  document.getElementById('note-fs-date').textContent = formatNoteDate(note.created);
+  renderNotePhotos(note.photos || []);
+  document.getElementById('note-fullscreen').classList.add('open');
+  setTimeout(() => {
+    const t = document.getElementById('note-fs-title');
+    if (!t.value) t.focus();
+    else document.getElementById('note-fs-text').focus();
+  }, 100);
+}
+
+function closeNoteFS() {
+  document.getElementById('note-fullscreen').classList.remove('open');
+  editingNoteId = null;
+  renderNotes();
+}
+
+async function saveNoteFS() {
+  if (!editingNoteId) return;
+  const n = notes.find(n=>n.id===editingNoteId); if(!n) return;
+  n.title = document.getElementById('note-fs-title').value;
+  n.body  = document.getElementById('note-fs-text').value;
+  await upsertNote(n);
+}
+
+async function deleteNoteFS() {
+  if (!editingNoteId) return;
+  const ok = await confirmAsync('Usunąć notatkę ze wszystkimi zdjęciami?');
+  if (!ok) return;
+  const idToDelete = editingNoteId;
+  document.getElementById('note-fullscreen').classList.remove('open');
+  editingNoteId = null;
+  await deleteNoteDB(idToDelete);
+  notes = notes.filter(n => n.id !== idToDelete);
+  renderNotes();
+}
+
+// ── NOTE PHOTOS ──
+function triggerNotePhoto() {
+  document.getElementById('note-photo-input').click();
+}
+
+function handleNotePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const note = notes.find(n=>n.id===editingNoteId); if(!note) return;
+  e.target.value = '';
+
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    if (!note.photos) note.photos = [];
+    const photoEntry = { id: Date.now().toString(), data: ev.target.result, name: file.name };
+
+    // Upload to Drive if connected
+    if (gdriveToken) {
+      try {
+        showToast('⬆️ Przesyłanie na Drive: ' + file.name);
+        const driveFile = await gdriveUploadFile(file, 'Notatki');
+        photoEntry.driveId = driveFile.driveId;
+        photoEntry.driveLink = driveFile.webViewLink;
+        showToast('✅ Zdjęcie zapisane na Drive');
+      } catch(err) {
+        console.warn('Drive upload error:', err);
+        showToast('⚠️ Drive niedostępny, zapisano lokalnie');
+      }
+    }
+
+    note.photos.push(photoEntry);
+    await upsertNote(note);
+    renderNotePhotos(note.photos);
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderNotePhotos(photos) {
+  const grid = document.getElementById('note-photos-grid');
+  grid.innerHTML = '';
+  (photos||[]).forEach(photo => {
+    const wrap = document.createElement('div');
+    wrap.className = 'note-photo-thumb';
+    const img = document.createElement('img');
+    img.src = photo.data;
+    img.alt = photo.name;
+    wrap.appendChild(img);
+    wrap.onclick = () => openLightbox(photo.id);
+    grid.appendChild(wrap);
+  });
+}
+
+// ── LIGHTBOX ──
+let lightboxPhotoId = null;
+
+function openLightbox(photoId) {
+  const note = notes.find(n=>n.id===editingNoteId); if(!note) return;
+  const photo = (note.photos||[]).find(p=>p.id===photoId); if(!photo) return;
+  lightboxPhotoId = photoId;
+  document.getElementById('lightbox-img').src = photo.data;
+  const driveBtn = document.getElementById('lightbox-drive-btn');
+  if (driveBtn) {
+    if (photo.driveLink) {
+      driveBtn.href = photo.driveLink;
+      driveBtn.style.display = 'inline-flex';
+    } else {
+      driveBtn.style.display = 'none';
+    }
+  }
+  document.getElementById('lightbox-overlay').classList.add('open');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox-overlay').classList.remove('open');
+  document.getElementById('lightbox-img').src = '';
+  lightboxPhotoId = null;
+}
+
+function downloadLightboxPhoto() {
+  const note = notes.find(n=>n.id===editingNoteId); if(!note) return;
+  const photo = (note.photos||[]).find(p=>p.id===lightboxPhotoId); if(!photo) return;
+  const a = document.createElement('a');
+  a.href = photo.data;
+  a.download = photo.name || 'zdjecie.jpg';
+  a.click();
+}
+
+async function deleteLightboxPhoto() {
+  const ok = await confirmAsync('Usunąć zdjęcie?');
+  if (!ok) return;
+  const note = notes.find(n=>n.id===editingNoteId); if(!note) return;
+  const photo = (note.photos||[]).find(p=>p.id===lightboxPhotoId);
+  if (photo?.driveId && gdriveToken) {
+    gdriveDeleteFile(photo.driveId).catch(e => console.warn('Drive delete:', e));
+  }
+  note.photos = (note.photos||[]).filter(p=>p.id!==lightboxPhotoId);
+  await upsertNote(note);
+  closeLightbox();
+  renderNotePhotos(note.photos);
+}
+
+// ── FILES TAB ──
+// ── SMART FILE DOWNLOAD ──
+const _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+async function smartDownloadFile(file) {
+  if (!file.driveId || !gdriveToken) {
+    showToast('ℹ️ Plik nie jest zapisany na Drive');
+    return;
+  }
+  showToast('⬇️ Pobieranie: ' + file.name);
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${file.driveId}?alt=media`,
+      { headers: { 'Authorization': 'Bearer ' + gdriveToken } }
+    );
+    if (!res.ok) throw new Error('Błąd Drive ' + res.status);
+    const blob = await res.blob();
+    await triggerDownload(blob, file.name, file.type || blob.type);
+  } catch(e) {
+    showToast('❌ Błąd pobierania: ' + e.message);
+  }
+}
+
+async function triggerDownload(blob, name, type) {
+  if (_isIOS) {
+    if (navigator.share && navigator.canShare) {
+      const f = new File([blob], name, { type: blob.type || type || 'application/octet-stream' });
+      if (navigator.canShare({ files: [f] })) {
+        try { await navigator.share({ files: [f], title: name }); return; }
+        catch(e) { if (e.name === 'AbortError') return; }
+      }
+    }
+    // Fallback: open blob URL
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 15000);
+    showToast('💡 Przytrzymaj obraz → Zachowaj');
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+}
+
+async function downloadAllFiles(postId) {
+  const post = posts.find(p => p.id === postId);
+  if (!post || !post.files.length) return;
+  const drivFiles = post.files.filter(f => f.driveId);
+  if (!drivFiles.length) { showToast('ℹ️ Brak plików na Drive'); return; }
+
+  if (_isIOS) {
+    // iOS: share all files at once via Web Share API
+    if (!gdriveToken) { showToast('⚠️ Połącz Drive aby pobrać pliki'); return; }
+    showToast('⬇️ Pobieranie ' + drivFiles.length + ' plików…');
+    try {
+      const fileObjs = await Promise.all(drivFiles.map(async f => {
+        const res = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${f.driveId}?alt=media`,
+          { headers: { 'Authorization': 'Bearer ' + gdriveToken } }
+        );
+        if (!res.ok) throw new Error(f.name);
+        const blob = await res.blob();
+        return new File([blob], f.name, { type: blob.type || f.type || 'application/octet-stream' });
+      }));
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: fileObjs })) {
+        await navigator.share({ files: fileObjs, title: post.title });
+      } else {
+        // Fallback: download one by one
+        for (const f of drivFiles) await smartDownloadFile(f);
+      }
+    } catch(e) { if (e.name !== 'AbortError') showToast('❌ ' + e.message); }
+  } else {
+    // Windows: sequential download with small delay between files
+    if (!gdriveToken) { showToast('⚠️ Połącz Drive aby pobrać pliki'); return; }
+    showToast('⬇️ Pobieranie ' + drivFiles.length + ' plików…');
+    for (let i = 0; i < drivFiles.length; i++) {
+      await smartDownloadFile(drivFiles[i]);
+      if (i < drivFiles.length - 1) await new Promise(r => setTimeout(r, 600));
+    }
+    showToast('✅ Pobrano wszystkie pliki');
+  }
+}
+
+function renderFilesTab() {
+  const wrap = document.getElementById('files-tab-wrap');
+  wrap.innerHTML = '';
+
+  const postsWithFiles = posts.filter(p => p.files && p.files.length > 0);
+
+  if (!postsWithFiles.length) {
+    wrap.innerHTML = '<div class="files-empty">📁 Brak plików.<br>Dodaj załączniki do postów w kalendarzu.</div>';
+    return;
+  }
+
+  postsWithFiles.forEach(post => {
+    const card = document.createElement('div');
+    card.className = 'file-post-card';
+
+    // Header with Download All button
+    const hasDriveFiles = post.files.some(f => f.driveId);
+    const hdr = document.createElement('div');
+    hdr.className = 'file-post-header';
+    hdr.innerHTML = `
+      <div>
+        <div class="file-post-title" style="color:${post.color}">${escHtml(post.title)}</div>
+        <div class="file-post-meta">${escHtml(post.clientName)} · ${formatDate(post.date)} · ${post.type}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        ${hasDriveFiles ? `<button class="btn btn-sm" style="font-size:.7rem;padding:3px 9px;white-space:nowrap;" onclick="downloadAllFiles('${post.id}')">⬇️ Pobierz wszystkie</button>` : ''}
+        <span class="type-badge" style="background:${hex2rgba(post.color,.18)};color:${post.color};white-space:nowrap;">${post.files.length} plik${post.files.length===1?'':'ów'}</span>
+      </div>`;
+    card.appendChild(hdr);
+
+    // Files
+    post.files.forEach((file, idx) => {
+      const icon = file.type?.startsWith('video') ? '🎬' : file.type?.startsWith('image') ? '🖼️' : '📄';
+      const driveBtn = file.driveLink
+        ? `<a href="${file.driveLink}" target="_blank" class="btn btn-sm" style="font-size:.7rem;padding:3px 8px;text-decoration:none;">☁️ Drive</a>`
+        : '';
+      const dlBtn = file.driveId
+        ? `<button class="btn btn-sm" style="font-size:.7rem;padding:3px 8px;" data-dl-post="${post.id}" data-dl-idx="${idx}" title="Pobierz">⬇️</button>`
+        : '';
+      const row = document.createElement('div');
+      row.className = 'file-row';
+      row.innerHTML = `
+        <span class="file-row-icon">${icon}</span>
+        <div class="file-row-info">
+          <div class="file-row-name">${escHtml(file.name)}</div>
+          <div class="file-row-size">${fmtSize(file.size)}</div>
+        </div>
+        <div class="file-row-actions">
+          ${driveBtn}${dlBtn}
+          <button class="btn btn-sm btn-danger" onclick="deletePostFile('${post.id}',${idx})">Usuń</button>
+        </div>`;
+      card.appendChild(row);
+    });
+
+    const addBtn = document.createElement('div');
+    addBtn.className = 'file-add-btn';
+    addBtn.innerHTML = '<span>＋</span> Dodaj plik';
+    addBtn.onclick = () => openDetail(post.id);
+    card.appendChild(addBtn);
+
+    wrap.appendChild(card);
+  });
+
+  // Event delegation for individual download buttons
+  wrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-dl-post]');
+    if (!btn) return;
+    const postId = btn.dataset.dlPost;
+    const idx = parseInt(btn.dataset.dlIdx);
+    const post = posts.find(p => p.id === postId);
+    if (post?.files?.[idx]) smartDownloadFile(post.files[idx]);
+  });
+}
+
+async function deletePostFile(postId, fileIdx) {
+  const ok = await confirmAsync('Usunąć plik?');
+  if (!ok) return;
+  const post = posts.find(p=>p.id===postId); if(!post) return;
+  const file = post.files[fileIdx];
+  if (file?.driveId && gdriveToken) {
+    gdriveDeleteFile(file.driveId).catch(e => console.warn('Drive delete:', e));
+  }
+  post.files.splice(fileIdx, 1);
+  await upsertPost(post);
+  renderFilesTab();
+  renderCalendar();
+}
+
+// ── POST MODAL ──
+function openNewPost(dateStr) {
+  editingPostId = null;
+  pendingFiles = [];
+  document.getElementById('post-modal-title').textContent = 'Nowy post';
+  document.getElementById('post-date').value    = dateStr || todayStr();
+  document.getElementById('post-title').value   = '';
+  document.getElementById('post-notes').value   = '';
+  document.getElementById('post-reminder').value= '09:00';
+  document.getElementById('post-type').value    = 'Reels';
+  selectedColor = COLORS[0]; renderColorPicker();
+  populateClientSelect();
+  hideInlineAddClient();
+  renderPostModalFileList();
+  openModal('post-modal');
+}
+
+function populateClientSelect() {
+  document.getElementById('post-client').innerHTML =
+    clients.map(c=>`<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+}
+
+async function savePost() {
+  const clientId = document.getElementById('post-client').value;
+  const client   = clients.find(c=>c.id===clientId);
+  const post = {
+    id:        editingPostId || Date.now().toString(),
+    clientId,
+    clientName: client?.name || '',
+    date:       document.getElementById('post-date').value,
+    title:      document.getElementById('post-title').value || 'Post',
+    type:       document.getElementById('post-type').value,
+    notes:      document.getElementById('post-notes').value,
+    color:      selectedColor,
+    reminder:   document.getElementById('post-reminder').value,
+    files:      pendingFiles.filter(f => !f._file), // existing saved files only, raw new ones uploaded below
+  };
+
+  // Upload any newly added raw files (flagged with _file)
+  const rawFiles = pendingFiles.filter(f => f._file);
+  for (const entry of rawFiles) {
+    let fileEntry = { name: entry.name, size: entry.size, type: entry.type };
+    if (gdriveToken) {
+      try {
+        showToast('⬆️ Przesyłanie: ' + entry.name);
+        const driveFile = await gdriveUploadFile(entry._file, 'Posty');
+        fileEntry.driveId   = driveFile.driveId;
+        fileEntry.driveLink = driveFile.webViewLink;
+        showToast('✅ Dodano na Drive: ' + entry.name);
+      } catch(err) {
+        showToast('⚠️ Drive niedostępny, zapisano lokalnie');
+      }
+    }
+    post.files.push(fileEntry);
+  }
+
+  if (editingPostId) { const i=posts.findIndex(p=>p.id===editingPostId); posts[i]=post; }
+  else posts.push(post);
+  await upsertPost(post);
+  pendingFiles = [];
+  closeModal('post-modal'); renderCalendar(); renderSidebar();
+}
+
+// ── DETAIL MODAL ──
+function openDetail(id) {
+  const post = posts.find(p=>p.id===id); if(!post) return;
+  viewingPostId = id;
+  document.getElementById('detail-badge').textContent = post.type;
+  document.getElementById('detail-badge').style.background = hex2rgba(post.color,.18);
+  document.getElementById('detail-badge').style.color = post.color;
+  document.getElementById('detail-title').textContent    = post.title;
+  document.getElementById('detail-client').textContent   = post.clientName;
+  document.getElementById('detail-date').textContent     = formatDate(post.date);
+  document.getElementById('detail-notes').textContent    = post.notes || '—';
+  document.getElementById('detail-reminder').textContent = post.reminder ? `⏰ ${post.reminder}` : '—';
+  renderFileList(post.files||[]);
+  openModal('detail-modal');
+}
+
+function editCurrentPost() {
+  const post = posts.find(p=>p.id===viewingPostId); if(!post) return;
+  closeModal('detail-modal');
+  editingPostId = post.id;
+  pendingFiles = [...(post.files||[])];
+  document.getElementById('post-modal-title').textContent = 'Edytuj post';
+  populateClientSelect();
+  document.getElementById('post-client').value    = post.clientId;
+  document.getElementById('post-date').value      = post.date;
+  document.getElementById('post-title').value     = post.title;
+  document.getElementById('post-type').value      = post.type;
+  document.getElementById('post-notes').value     = post.notes;
+  document.getElementById('post-reminder').value  = post.reminder;
+  selectedColor = post.color; renderColorPicker();
+  hideInlineAddClient();
+  renderPostModalFileList();
+  openModal('post-modal');
+}
+
+async function deleteCurrentPost() {
+  const ok = await confirmAsync('Usunąć ten post?');
+  if(!ok) return;
+  const deletedDate = (posts.find(p=>p.id===viewingPostId)||{}).date;
+  await deletePost(viewingPostId);
+  posts = posts.filter(p=>p.id!==viewingPostId);
+  closeModal('detail-modal');
+  renderCalendar();
+  const remaining = posts.filter(p=>p.date===deletedDate);
+  if (remaining.length === 0) closeDayPanel();
+  else openDayPanel(deletedDate);
+}
+
+// ── FILES ──
+function triggerFileUpload() { document.getElementById('file-input').click(); }
+async function handleFiles(e) {
+  const post = posts.find(p=>p.id===viewingPostId); if(!post) return;
+  const newFiles = Array.from(e.target.files);
+  e.target.value = '';
+
+  for (const file of newFiles) {
+    let fileEntry = { name: file.name, size: file.size, type: file.type };
+    if (gdriveToken) {
+      try {
+        showToast('⬆️ Przesyłanie na Drive: ' + file.name);
+        const driveFile = await gdriveUploadFile(file, 'Posty');
+        fileEntry.driveId = driveFile.driveId;
+        fileEntry.driveLink = driveFile.webViewLink;
+        showToast('✅ Dodano na Drive: ' + file.name);
+      } catch(err) {
+        showToast('⚠️ Drive niedostępny, zapisano lokalnie');
+        console.warn('Drive upload error:', err);
+      }
+    }
+    post.files = [...(post.files||[]), fileEntry];
+  }
+  await upsertPost(post);
+  renderFileList(post.files);
+  renderFilesTab();
+}
+function renderFileList(files) {
+  const list = document.getElementById('file-list');
+  list.innerHTML = '';
+  const dlAllBtn = document.getElementById('detail-dl-all-btn');
+  const hasDrive = files.some(f => f.driveId);
+  if (dlAllBtn) dlAllBtn.style.display = (hasDrive && files.length > 1) ? '' : 'none';
+
+  files.forEach((f, idx) => {
+    const icon = f.type?.startsWith('video') ? '🎬' : f.type?.startsWith('image') ? '🖼️' : '📄';
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.style.cssText = 'justify-content:space-between;gap:6px;';
+    const dlBtn = f.driveId
+      ? `<button class="btn btn-sm" style="padding:2px 7px;font-size:.7rem;flex-shrink:0;" data-dl-detail-idx="${idx}" title="Pobierz">⬇️</button>`
+      : '';
+    item.innerHTML = `
+      <span style="flex-shrink:0;">${icon}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(f.name)}</span>
+      <span style="color:var(--muted);font-size:.7rem;flex-shrink:0;">${fmtSize(f.size)}</span>
+      ${dlBtn}`;
+    list.appendChild(item);
+  });
+
+  // Event delegation for per-file download
+  list.onclick = (e) => {
+    const btn = e.target.closest('[data-dl-detail-idx]');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.dlDetailIdx);
+    const post = posts.find(p => p.id === viewingPostId);
+    if (post?.files?.[idx]) smartDownloadFile(post.files[idx]);
+  };
+}
+
+// ── POST MODAL FILE STAGING ──
+function handlePostModalFiles(e) {
+  const files = Array.from(e.target.files);
+  e.target.value = '';
+  files.forEach(file => {
+    pendingFiles.push({ _file: file, name: file.name, size: file.size, type: file.type });
+  });
+  renderPostModalFileList();
+}
+
+function renderPostModalFileList() {
+  const list = document.getElementById('post-file-list');
+  if (!list) return;
+  list.innerHTML = '';
+  pendingFiles.forEach((f, idx) => {
+    const icon = f.type?.startsWith('video') ? '🎬' : f.type?.startsWith('image') ? '🖼️' : '📄';
+    const isNew = !!f._file;
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML = `
+      <span>${icon}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(f.name)}</span>
+      <span style="color:var(--muted);font-size:.7rem;flex-shrink:0;">${isNew ? '🆕' : '✅'} ${fmtSize(f.size)}</span>
+      <button class="btn btn-sm btn-danger" style="padding:2px 6px;font-size:.68rem;" onclick="removePostModalFile(${idx})">✕</button>`;
+    list.appendChild(item);
+  });
+  const drop = document.getElementById('post-files-drop');
+  if (drop) drop.style.display = pendingFiles.length > 0 ? 'none' : '';
+}
+
+function removePostModalFile(idx) {
+  pendingFiles.splice(idx, 1);
+  renderPostModalFileList();
+}
+
+// ── COLOR PICKER ──
+function renderColorPicker() {
+  const c = document.getElementById('color-picker'); c.innerHTML='';
+  COLORS.forEach(hex=>{
+    const s = document.createElement('div');
+    s.className = 'color-swatch'+(hex===selectedColor?' selected':'');
+    s.style.background = hex;
+    s.onclick = ()=>{ selectedColor=hex; renderColorPicker(); };
+    c.appendChild(s);
+  });
+}
+
+// ── NAVIGATION ──
+function changeMonth(dir) {
+  currentMonth += dir;
+  if(currentMonth>11){currentMonth=0;currentYear++;}
+  if(currentMonth<0){currentMonth=11;currentYear--;}
+  renderCalendar();
+}
+
+// ── HELPERS ──
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function pad(n)         { return String(n).padStart(2,'0'); }
+function todayStr()     { const n=new Date(); return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`; }
+function formatDate(s)  { if(!s) return '—'; const [y,m,d]=s.split('-'); return `${d}.${m}.${y}`; }
+function formatNoteDate(s) {
+  if (!s) return '—';
+  try {
+    const d = new Date(s);
+    const day   = String(d.getDate()).padStart(2,'0');
+    const month = String(d.getMonth()+1).padStart(2,'0');
+    const year  = d.getFullYear();
+    return `${day}.${month}.${year}`;
+  } catch(e) { return formatDate(s.split('T')[0]); }
+}
+function hex2rgba(h,a)  { const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return `rgba(${r},${g},${b},${a})`; }
+function fmtSize(b)     { if(!b) return ''; return b>1048576?(b/1048576).toFixed(1)+'MB':(b/1024).toFixed(0)+'KB'; }
+function escHtml(s)     { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// ── SAVE FUNCTIONS (Supabase) ──
+async function savePosts() {
+  // handled per-operation (upsert/delete) below
+}
+async function saveClients() {
+  // handled per-operation below
+}
+async function saveNotes() {
+  // handled per-operation below
+}
+
+async function upsertPost(post) {
+  await sbFetch('posts?on_conflict=id', {
+    method: 'POST',
+    prefer: 'resolution=merge-duplicates,return=representation',
+    body: JSON.stringify({
+      id: post.id, client_id: post.clientId, client_name: post.clientName,
+      date: post.date, title: post.title, type: post.type,
+      notes: post.notes, color: post.color, reminder: post.reminder,
+      files: post.files || []
+    })
+  });
+}
+
+async function deletePost(id) {
+  await sbFetch('posts?id=eq.' + id, { method: 'DELETE' });
+}
+
+async function upsertClient(c) {
+  await sbFetch('clients?on_conflict=id', {
+    method: 'POST',
+    prefer: 'resolution=merge-duplicates,return=representation',
+    body: JSON.stringify({
+      id: c.id, name: c.name, color: c.color,
+      phone: c.phone||'', address: c.address||'',
+      payment_date: c.paymentDate||'', notes: c.notes||''
+    })
+  });
+}
+
+async function deleteClientDB(id) {
+  await sbFetch('clients?id=eq.' + id, { method: 'DELETE' });
+}
+
+async function upsertNote(note) {
+  await sbFetch('notes?on_conflict=id', {
+    method: 'POST',
+    prefer: 'resolution=merge-duplicates,return=representation',
+    body: JSON.stringify({
+      id: note.id, title: note.title, body: note.body,
+      done: note.done, photos: note.photos || []
+    })
+  });
+}
+
+async function deleteNoteDB(id) {
+  await sbFetch('notes?id=eq.' + id, { method: 'DELETE' });
+}
+</script>
+
+<!-- DRIVE DISCONNECT BANNER -->
+<div id="drive-banner">
+  <div class="drive-banner-top">
+    <span class="drive-banner-icon">☁️</span>
+    <div class="drive-banner-msg">
+      <div class="drive-banner-title">Nie jesteś połączony z Google Drive</div>
+      <div class="drive-banner-sub">Zaloguj się, aby synchronizować pliki między urządzeniami.</div>
+    </div>
+    <button class="drive-banner-close" onclick="hideDriveBanner()" title="Zamknij">✕</button>
+  </div>
+  <button class="btn btn-primary btn-sm" style="width:100%;font-size:.82rem;" onclick="gdriveSignIn();hideDriveBanner()">🔗 Połącz z Google Drive</button>
+  <div class="drive-banner-hint">⚠️ Bez połączenia pliki i zdjęcia <strong>nie są zapisywane na dysku</strong> i nie będą widoczne na innych urządzeniach.</div>
+</div>
+
+</div><!-- /main-app -->
+</body>
+</html>
