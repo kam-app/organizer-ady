@@ -869,10 +869,32 @@ textarea{resize:vertical;min-height:55px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
 
+/* ── MOBILE PLANER ── */
+.mobile-planer{
+  display:none;
+  flex-direction:column;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.mobile-planer-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px 6px;
+  font-size:.66rem;font-weight:600;letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--muted);
+}
+.mobile-planer-list{
+  display:flex;flex-direction:column;gap:4px;
+  overflow-y:auto;max-height:160px;
+  -webkit-overflow-scrolling:touch;
+  padding:0 8px 8px;
+}
+
 /* ── MOBILE ── */
 @media(max-width:620px){
   .app{grid-template-columns:1fr;}
   .sidebar{display:none;}
+  .mobile-planer{display:flex;}
   .calendar-wrap{padding:7px;}
   .day-cell{min-height:90px;padding:4px 3px 3px;border-radius:7px;}
   .weekday{font-size:.59rem;}
@@ -945,7 +967,7 @@ textarea{resize:vertical;min-height:55px;}
     <button class="header-logout" onclick="handleLogout()">wyloguj</button>
     <div class="logo-block">
       <span class="logo">Organizer</span>
-      <span class="logo-ver">v1.0.130326</span>
+      <span class="logo-ver">v1.1.140326</span>
     </div>
   </div>
   <div class="header-right">
@@ -997,6 +1019,14 @@ textarea{resize:vertical;min-height:55px;}
         </div>
         <div class="days-grid" id="days-grid"></div>
       </div>
+    </div>
+
+    <!-- MOBILE PLANER — widoczny tylko na telefonie -->
+    <div class="mobile-planer" id="mobile-planer">
+      <div class="mobile-planer-header">
+        <span>📅 Planer publikacji</span>
+      </div>
+      <div class="mobile-planer-list" id="planer-list-mobile"></div>
     </div>
 
   </main>
@@ -1111,10 +1141,10 @@ textarea{resize:vertical;min-height:55px;}
 
     <div style="display:flex;gap:10px;margin-bottom:12px;">
       <div class="form-group" style="flex:1;margin-bottom:0;"><label>Data</label><input type="date" id="post-date" style="width:100%;box-sizing:border-box;"></div>
-      <div class="form-group" style="flex:1;margin-bottom:0;position:relative;cursor:pointer;" onclick="document.getElementById('post-reminder').showPicker ? document.getElementById('post-reminder').showPicker() : document.getElementById('post-reminder').focus()">
-        <label style="display:block;pointer-events:none;">Przypomnienie</label>
-        <input type="time" id="post-reminder" value="09:00" style="width:100%;box-sizing:border-box;cursor:pointer;">
-      </div>
+      <label class="form-group" style="flex:1;margin-bottom:0;cursor:pointer;">
+        <span style="display:block;font-size:.69rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Przypomnienie</span>
+        <input type="time" id="post-reminder" value="09:00" style="width:100%;box-sizing:border-box;">
+      </label>
     </div>
     <div class="form-group"><label>Temat / Tytuł</label><input type="text" id="post-title" placeholder="np. Reels – Kulisy treningu"></div>
     <div class="form-group">
@@ -2031,8 +2061,8 @@ function newPostFromPanel() {
 // ── SIDEBAR — PLANER PUBLIKACJI ──
 function renderSidebar() {
   const list = document.getElementById('planer-list');
+  const listMobile = document.getElementById('planer-list-mobile');
   if (!list) return;
-  list.innerHTML = '';
 
   const today = todayStr();
   const now = new Date();
@@ -2041,41 +2071,45 @@ function renderSidebar() {
     .filter(p => p.date >= today && p.date <= monthEnd)
     .sort((a,b) => a.date.localeCompare(b.date));
 
-  if (!upcoming.length) {
-    list.innerHTML = '<div class="planer-empty">Brak zaplanowanych<br>publikacji 🎉</div>';
-    return;
+  function buildTiles(container) {
+    container.innerHTML = '';
+    if (!upcoming.length) {
+      container.innerHTML = '<div class="planer-empty">Brak zaplanowanych<br>publikacji 🎉</div>';
+      return;
+    }
+    upcoming.forEach(post => {
+      const client = clients.find(c=>c.id===post.clientId);
+      const color = post.color || (client?.color) || '#888';
+
+      const postDate = new Date(post.date); postDate.setHours(0,0,0,0);
+      const nowD = new Date(); nowD.setHours(0,0,0,0);
+      const diffDays = Math.round((postDate - nowD) / 86400000);
+      let timeLabel = '', timeClass = '';
+      if (diffDays === 0) { timeLabel = 'Dziś'; timeClass = 'today'; }
+      else if (diffDays === 1) { timeLabel = 'Jutro'; timeClass = 'soon'; }
+      else if (diffDays <= 7) { timeLabel = `Za ${diffDays} dni`; timeClass = 'soon'; }
+      else {
+        const [y,m,d] = post.date.split('-');
+        timeLabel = `${parseInt(d)} ${MONTH_NAMES[parseInt(m)-1].toLowerCase().slice(0,3)}`;
+        timeClass = '';
+      }
+
+      const tile = document.createElement('div');
+      tile.className = 'planer-tile';
+      tile.style.borderLeftColor = color;
+      tile.innerHTML = `
+        <div class="planer-tile-top">
+          <span class="planer-tile-dot" style="background:${color}"></span>
+          <span class="planer-tile-name">${escHtml(post.clientName)} – ${escHtml(post.type)}</span>
+        </div>
+        <div class="planer-tile-time ${timeClass}">⏱ ${timeLabel}${post.title ? ` · <span style="color:var(--muted);font-size:.64rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px;">${escHtml(post.title)}</span>` : ''}</div>`;
+      tile.onclick = () => openDetail(post.id);
+      container.appendChild(tile);
+    });
   }
 
-  upcoming.forEach(post => {
-    const client = clients.find(c=>c.id===post.clientId);
-    const color = post.color || (client?.color) || '#888';
-
-    // Calculate time label
-    const postDate = new Date(post.date); postDate.setHours(0,0,0,0);
-    const now = new Date(); now.setHours(0,0,0,0);
-    const diffDays = Math.round((postDate - now) / 86400000);
-    let timeLabel = '', timeClass = '';
-    if (diffDays === 0) { timeLabel = 'Dziś'; timeClass = 'today'; }
-    else if (diffDays === 1) { timeLabel = 'Jutro'; timeClass = 'soon'; }
-    else if (diffDays <= 7) { timeLabel = `Za ${diffDays} dni`; timeClass = 'soon'; }
-    else {
-      const [y,m,d] = post.date.split('-');
-      timeLabel = `${parseInt(d)} ${MONTH_NAMES[parseInt(m)-1].toLowerCase().slice(0,3)}`;
-      timeClass = '';
-    }
-
-    const tile = document.createElement('div');
-    tile.className = 'planer-tile';
-    tile.style.borderLeftColor = color;
-    tile.innerHTML = `
-      <div class="planer-tile-top">
-        <span class="planer-tile-dot" style="background:${color}"></span>
-        <span class="planer-tile-name">${escHtml(post.clientName)} – ${escHtml(post.type)}</span>
-      </div>
-      <div class="planer-tile-time ${timeClass}">⏱ ${timeLabel}${post.title ? ` · <span style="color:var(--muted);font-size:.64rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px;">${escHtml(post.title)}</span>` : ''}</div>`;
-    tile.onclick = () => openDetail(post.id);
-    list.appendChild(tile);
-  });
+  buildTiles(list);
+  if (listMobile) buildTiles(listMobile);
 }
 
 async function deleteClient(id) {
