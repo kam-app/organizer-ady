@@ -585,9 +585,7 @@ textarea{resize:vertical;min-height:55px;}
 .detail-field{background:var(--bg);border-radius:8px;padding:9px 11px;margin-bottom:7px;}
 .detail-field-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;font-weight:600;}
 .detail-field-value{font-size:.86rem;}
-.detail-reminder-tile{transition:background .15s,border-color .15s;border:1px solid transparent;}
-.detail-reminder-tile:hover{background:rgba(192,57,43,.10);border-color:var(--accent);}
-.detail-reminder-tile:active{background:rgba(192,57,43,.18);}
+.detail-reminder-tile{border:1px solid transparent;}
 .files-drop{
   border:2px dashed var(--border);border-radius:8px;padding:13px;
   text-align:center;color:var(--muted);font-size:.79rem;cursor:pointer;
@@ -1113,7 +1111,10 @@ textarea{resize:vertical;min-height:55px;}
 
     <div style="display:flex;gap:10px;margin-bottom:12px;">
       <div class="form-group" style="flex:1;margin-bottom:0;"><label>Data</label><input type="date" id="post-date" style="width:100%;box-sizing:border-box;"></div>
-      <div class="form-group" style="flex:1;margin-bottom:0;"><label>Przypomnienie</label><input type="time" id="post-reminder" value="09:00" style="width:100%;box-sizing:border-box;"></div>
+      <div class="form-group" style="flex:1;margin-bottom:0;position:relative;cursor:pointer;" onclick="document.getElementById('post-reminder').showPicker ? document.getElementById('post-reminder').showPicker() : document.getElementById('post-reminder').focus()">
+        <label style="display:block;pointer-events:none;">Przypomnienie</label>
+        <input type="time" id="post-reminder" value="09:00" style="width:100%;box-sizing:border-box;cursor:pointer;">
+      </div>
     </div>
     <div class="form-group"><label>Temat / Tytuł</label><input type="text" id="post-title" placeholder="np. Reels – Kulisy treningu"></div>
     <div class="form-group">
@@ -1156,7 +1157,7 @@ textarea{resize:vertical;min-height:55px;}
         <div class="detail-field-label">Data</div>
         <div class="detail-field-value" id="detail-date"></div>
       </div>
-      <div class="detail-field detail-reminder-tile" id="detail-reminder-tile" style="flex:1;margin-bottom:0;cursor:pointer;" onclick="editCurrentPost()" title="Kliknij aby edytować">
+      <div class="detail-field detail-reminder-tile" id="detail-reminder-tile" style="flex:1;margin-bottom:0;">
         <div class="detail-field-label">Przypomnienie</div>
         <div class="detail-field-value" id="detail-reminder"></div>
       </div>
@@ -1475,6 +1476,27 @@ async function gdriveEnsureFolders() {
   const notatId   = await gdriveEnsureFolder('Notatki', orgId);
   const kliId     = await gdriveEnsureFolder('Klienci', orgId);
   gdriveFolderIds = { root: orgId, Posty: postyId, Notatki: notatId, Klienci: kliId };
+}
+
+// ── CACHE miniatur z Drive (driveId → URL) ──
+const _thumbCache = {};
+
+async function gdriveGetThumb(driveId) {
+  if (_thumbCache[driveId]) return _thumbCache[driveId];
+  if (!gdriveToken) return null;
+  try {
+    const res = await gdriveApiCall(
+      `https://www.googleapis.com/drive/v3/files/${driveId}?fields=thumbnailLink`,
+    );
+    const data = await res.json();
+    if (data.thumbnailLink) {
+      // thumbnailLink ma =s220 — zwiększamy do s800 dla lepszej jakości
+      const url = data.thumbnailLink.replace(/=s\d+/, '=s800');
+      _thumbCache[driveId] = url;
+      return url;
+    }
+  } catch(e) { console.warn('thumb fetch err:', e); }
+  return null;
 }
 
 // ── GENERUJ MINIATURĘ z lokalnego pliku (canvas resize) ──
@@ -2739,32 +2761,22 @@ function renderFilesTab() {
     post.files.forEach((file, idx) => {
       const item = document.createElement('div');
       item.className = 'file-gallery-item';
-
-      let previewInner = '';
-      if (file.type?.startsWith('image') && (file.thumbData || file.driveThumbUrl)) {
-        previewInner = `<img src="${file.thumbData || file.driveThumbUrl}" loading="lazy">`;
-      } else if (file.type?.startsWith('video')) {
-        previewInner = `<span style="font-size:2rem;">🎬</span><span class="play-icon">▶️</span>`;
-      } else if (file.type === 'application/pdf') {
-        previewInner = `<span style="font-size:1rem;font-weight:700;color:#e74c3c;">PDF</span>`;
-      } else if (file.type?.includes('word') || file.name?.endsWith('.docx') || file.name?.endsWith('.doc')) {
-        previewInner = `<span style="font-size:1rem;font-weight:700;color:#2980b9;">DOC</span>`;
-      } else if (file.type?.startsWith('image')) {
-        previewInner = `<span style="font-size:2rem;">🖼️</span>`;
-      } else {
-        previewInner = `<span style="font-size:2rem;">📄</span>`;
-      }
+      // Użyj _fileThumbHTML — obsługuje thumbData, cache Drive i placeholder
+      const previewClass = 'file-gallery-preview';
+      const thumbHtml = _fileThumbHTML(file);
 
       item.innerHTML = `
-        <div class="file-gallery-preview">${previewInner}</div>
+        <div class="${previewClass}">${thumbHtml}</div>
         <div class="file-gallery-name">${escHtml(file.name)}</div>
         <div class="file-gallery-meta">${formatDate(post.date)}</div>`;
 
-      item.querySelector('.file-gallery-preview').onclick = () => openFileLb(post.id, idx);
+      item.querySelector('.' + previewClass).onclick = () => openFileLb(post.id, idx);
       gallery.appendChild(item);
     });
 
     galleryWrap.appendChild(gallery);
+    // Async hydration — pobierz brakujące miniatury z Drive
+    _hydrateThumbsInContainer(gallery);
 
     // Add file button
     const addBtn = document.createElement('div');
@@ -3092,9 +3104,10 @@ async function deleteFileLbFile() {
 
 function _fileThumbHTML(f) {
   if (f.type?.startsWith('image')) {
-    const src = f.thumbData || f.driveThumbUrl;
-    if (src) return `<img src="${src}" loading="lazy">`;
-    return `<span class="file-thumb-type">🖼️</span>`;
+    const src = f.thumbData || f.driveThumbUrl || (_thumbCache[f.driveId] || '');
+    if (src) return `<img src="${src}" loading="lazy" data-drive-id="${f.driveId||''}">`;
+    // Brak miniatury lokalnie — pokaż placeholder, hydration uzupełni async
+    return `<img src="" loading="lazy" data-drive-id="${f.driveId||''}" data-needs-thumb="1" style="opacity:0;">`;
   }
   if (f.type?.startsWith('video')) {
     return `<span class="file-thumb-type">🎬</span><span class="play-icon">▶️</span>`;
@@ -3104,6 +3117,22 @@ function _fileThumbHTML(f) {
     return `<span class="file-thumb-type" style="font-size:1rem;font-weight:700;color:#2980b9;">DOC</span>`;
   }
   return `<span class="file-thumb-type">📄</span>`;
+}
+
+// Hydration — podmienia src dla zdjęć bez miniatury, pobierając z Drive
+async function _hydrateThumbsInContainer(container) {
+  if (!gdriveToken) return;
+  const imgs = container.querySelectorAll('img[data-needs-thumb="1"]');
+  for (const img of imgs) {
+    const driveId = img.dataset.driveId;
+    if (!driveId) continue;
+    const url = await gdriveGetThumb(driveId);
+    if (url) {
+      img.src = url;
+      img.style.opacity = '';
+      img.removeAttribute('data-needs-thumb');
+    }
+  }
 }
 
 function renderFileList(files) {
@@ -3129,6 +3158,8 @@ function renderFileList(files) {
   });
 
   list.appendChild(grid);
+  // Async hydration — podmień brakujące miniatury z Drive
+  _hydrateThumbsInContainer(grid);
 
   // Event delegation for per-file download (kept for backward compat)
   list.onclick = (e) => {
