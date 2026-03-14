@@ -571,12 +571,23 @@ textarea{resize:vertical;min-height:55px;}
 .detail-field{background:var(--bg);border-radius:8px;padding:9px 11px;margin-bottom:7px;}
 .detail-field-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;font-weight:600;}
 .detail-field-value{font-size:.86rem;}
+.detail-reminder-tile{transition:background .15s,border-color .15s;border:1px solid transparent;}
+.detail-reminder-tile:hover{background:rgba(192,57,43,.10);border-color:var(--accent);}
+.detail-reminder-tile:active{background:rgba(192,57,43,.18);}
 .files-drop{
   border:2px dashed var(--border);border-radius:8px;padding:13px;
   text-align:center;color:var(--muted);font-size:.79rem;cursor:pointer;
   transition:all .15s;margin-bottom:7px;line-height:1.5;
 }
 .files-drop:hover{border-color:var(--accent);color:var(--text);}
+.files-drop-compact{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--border);border-radius:8px;
+  padding:7px 14px;font-size:.78rem;color:var(--muted);
+  cursor:pointer;transition:all .15s;margin-bottom:7px;
+  background:var(--surface2);
+}
+.files-drop-compact:hover{border-color:var(--accent);color:var(--text);}
 .file-list{display:flex;flex-direction:column;gap:4px;}
 .file-item{display:flex;align-items:center;gap:7px;background:var(--bg);padding:6px 9px;border-radius:7px;font-size:.78rem;}
 
@@ -633,7 +644,95 @@ textarea{resize:vertical;min-height:55px;}
   padding:30px;text-align:center;line-height:1.7;
 }
 
-/* ── NOTE PHOTOS ── */
+/* ── FILE THUMBNAILS ── */
+.file-thumb-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+  gap:8px;margin-top:8px;
+}
+.file-thumb-item{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  cursor:pointer;
+}
+.file-thumb-preview{
+  width:100%;aspect-ratio:1;border-radius:8px;overflow:hidden;
+  border:1px solid var(--border);background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;transition:filter .15s;
+}
+.file-thumb-preview img{
+  width:100%;height:100%;object-fit:cover;display:block;
+}
+.file-thumb-preview:hover{filter:brightness(.8);}
+.file-thumb-preview .play-icon{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;pointer-events:none;
+}
+.file-thumb-type{
+  font-size:1.4rem;line-height:1;
+}
+.file-thumb-name{
+  font-size:.62rem;color:var(--muted);
+  text-align:center;width:100%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  max-width:80px;
+}
+
+/* ── FILE LIGHTBOX ── */
+.file-lb-overlay{
+  position:fixed;inset:0;z-index:650;
+  background:rgba(0,0,0,.93);
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:20px;
+}
+.file-lb-overlay.open{display:flex;}
+.file-lb-inner{
+  display:flex;flex-direction:column;align-items:center;
+  gap:14px;max-width:100%;max-height:100%;
+}
+.file-lb-inner img,.file-lb-inner video{
+  max-width:min(700px,90vw);
+  max-height:65dvh;
+  border-radius:10px;
+  object-fit:contain;
+}
+.file-lb-icon-big{
+  font-size:5rem;line-height:1;
+}
+.file-lb-name{
+  color:#fff;font-size:.85rem;opacity:.8;text-align:center;max-width:300px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.file-lb-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+
+/* ── FILES TAB GALLERY ── */
+.file-tab-gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+  gap:8px;padding:10px 0;
+}
+.file-gallery-item{
+  display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;
+}
+.file-gallery-preview{
+  width:100%;aspect-ratio:1;border-radius:9px;overflow:hidden;
+  border:1px solid var(--border);background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;transition:filter .15s;
+}
+.file-gallery-preview img{width:100%;height:100%;object-fit:cover;display:block;}
+.file-gallery-preview:hover{filter:brightness(.8);}
+.file-gallery-preview .play-icon{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;pointer-events:none;
+}
+.file-gallery-name{
+  font-size:.62rem;color:var(--muted);
+  text-align:center;width:100%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px;
+}
+.file-gallery-meta{font-size:.58rem;color:var(--muted);opacity:.7;text-align:center;}
 .note-photos-grid{
   display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
   gap:8px;margin-top:14px;
@@ -760,7 +859,7 @@ textarea{resize:vertical;min-height:55px;}
   .app{grid-template-columns:1fr;}
   .sidebar{display:none;}
   .calendar-wrap{padding:7px;}
-  .day-cell{min-height:58px;padding:4px 3px 3px;border-radius:7px;}
+  .day-cell{min-height:90px;padding:4px 3px 3px;border-radius:7px;}
   .weekday{font-size:.59rem;}
   .days-grid,.weekdays{gap:2px;}
   .view-header{padding:8px 10px;}
@@ -964,7 +1063,18 @@ textarea{resize:vertical;min-height:55px;}
   </div>
 </div>
 
-<!-- POST MODAL -->
+<!-- FILE LIGHTBOX (posty/pliki Drive) -->
+<div class="file-lb-overlay" id="file-lb-overlay" onclick="if(event.target===this)closeFileLb()">
+  <div class="file-lb-inner" id="file-lb-inner">
+    <div class="file-lb-name" id="file-lb-name"></div>
+    <div class="file-lb-actions">
+      <a id="file-lb-drive-btn" href="#" target="_blank" class="btn btn-sm" style="display:none;text-decoration:none;">☁️ Otwórz na Drive</a>
+      <button class="btn btn-sm" id="file-lb-dl-btn">⬇ Pobierz</button>
+      <button class="btn btn-sm btn-danger" id="file-lb-del-btn">Usuń</button>
+      <button class="btn btn-sm" onclick="closeFileLb()">✕ Zamknij</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="post-modal" onclick="if(event.target===this)closeModal('post-modal')">
   <div class="modal">
     <div class="modal-title" id="post-modal-title">Nowy post</div>
@@ -984,7 +1094,10 @@ textarea{resize:vertical;min-height:55px;}
       </div>
     </div>
 
-    <div class="form-group"><label>Data</label><input type="date" id="post-date"></div>
+    <div style="display:flex;gap:10px;margin-bottom:12px;">
+      <div class="form-group" style="flex:1;margin-bottom:0;"><label>Data</label><input type="date" id="post-date" style="width:100%;box-sizing:border-box;"></div>
+      <div class="form-group" style="flex:1;margin-bottom:0;"><label>Przypomnienie</label><input type="time" id="post-reminder" value="09:00" style="width:100%;box-sizing:border-box;"></div>
+    </div>
     <div class="form-group"><label>Temat / Tytuł</label><input type="text" id="post-title" placeholder="np. Reels – Kulisy treningu"></div>
     <div class="form-group">
       <label>Typ contentu</label>
@@ -992,14 +1105,13 @@ textarea{resize:vertical;min-height:55px;}
         <option>Reels</option><option>Post</option><option>Story</option><option>Karuzela</option>
       </select>
     </div>
-    <div class="form-group"><label>Notatki</label><textarea id="post-notes" placeholder="Opis, hashtagi, uwagi…"></textarea></div>
+    <div class="form-group"><label>Opis posta / Notatki</label><textarea id="post-notes" placeholder="Treść posta, hashtagi, uwagi do publikacji…"></textarea></div>
     <div class="form-group"><label>Kolor</label><div class="color-picker-row" id="color-picker"></div></div>
-    <div class="form-group"><label>Przypomnienie</label><input type="time" id="post-reminder" value="09:00"></div>
 
     <div class="form-group">
       <label>Materiały (opcjonalnie)</label>
-      <div class="files-drop" onclick="document.getElementById('post-file-input').click()" id="post-files-drop">
-        📎 Dotknij aby dodać pliki<br><span style="font-size:.7rem;">grafiki, wideo</span>
+      <div class="files-drop-compact" onclick="document.getElementById('post-file-input').click()" id="post-files-drop">
+        📎 Dodaj materiały
       </div>
       <input type="file" id="post-file-input" multiple accept="image/*,video/*,*/*" style="display:none" onchange="handlePostModalFiles(event)">
       <div class="file-list" id="post-file-list"></div>
@@ -1021,15 +1133,26 @@ textarea{resize:vertical;min-height:55px;}
     </div>
     <div id="detail-title" style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:11px;"></div>
     <div class="detail-field"><div class="detail-field-label">Klient</div><div class="detail-field-value" id="detail-client"></div></div>
-    <div class="detail-field"><div class="detail-field-label">Data</div><div class="detail-field-value" id="detail-date"></div></div>
-    <div class="detail-field"><div class="detail-field-label">Notatki</div><div class="detail-field-value" id="detail-notes"></div></div>
-    <div class="detail-field"><div class="detail-field-label">Przypomnienie</div><div class="detail-field-value" id="detail-reminder"></div></div>
+
+    <div style="display:flex;gap:8px;margin-bottom:7px;">
+      <div class="detail-field" style="flex:1;margin-bottom:0;">
+        <div class="detail-field-label">Data</div>
+        <div class="detail-field-value" id="detail-date"></div>
+      </div>
+      <div class="detail-field detail-reminder-tile" id="detail-reminder-tile" style="flex:1;margin-bottom:0;cursor:pointer;" onclick="editCurrentPost()" title="Kliknij aby edytować">
+        <div class="detail-field-label">Przypomnienie</div>
+        <div class="detail-field-value" id="detail-reminder"></div>
+      </div>
+    </div>
+
+    <div class="detail-field"><div class="detail-field-label">Opis posta / Notatki</div><div class="detail-field-value" id="detail-notes"></div></div>
+
     <div style="margin-top:11px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <label style="display:block;">Materiały</label>
         <button id="detail-dl-all-btn" class="btn btn-sm" style="font-size:.7rem;padding:3px 9px;display:none;" onclick="downloadAllFiles(viewingPostId)">⬇️ Pobierz wszystko</button>
       </div>
-      <div class="files-drop" onclick="triggerFileUpload()">📎 Dotknij aby dodać pliki<br><span style="font-size:.7rem;">grafiki, wideo</span></div>
+      <div class="files-drop-compact" onclick="triggerFileUpload()">📎 Dodaj materiały</div>
       <input type="file" id="file-input" multiple accept="image/*,video/*" style="display:none" onchange="handleFiles(event)">
       <div class="file-list" id="file-list"></div>
     </div>
@@ -2550,7 +2673,7 @@ function renderFilesTab() {
     const card = document.createElement('div');
     card.className = 'file-post-card';
 
-    // Header with Download All button
+    // Header
     const hasDriveFiles = post.files.some(f => f.driveId);
     const hdr = document.createElement('div');
     hdr.className = 'file-post-header';
@@ -2565,47 +2688,52 @@ function renderFilesTab() {
       </div>`;
     card.appendChild(hdr);
 
-    // Files
+    // Gallery grid
+    const galleryWrap = document.createElement('div');
+    galleryWrap.style.cssText = 'padding:10px 12px;';
+
+    const gallery = document.createElement('div');
+    gallery.className = 'file-tab-gallery';
+
     post.files.forEach((file, idx) => {
-      const icon = file.type?.startsWith('video') ? '🎬' : file.type?.startsWith('image') ? '🖼️' : '📄';
-      const driveBtn = file.driveLink
-        ? `<a href="${file.driveLink}" target="_blank" class="btn btn-sm" style="font-size:.7rem;padding:3px 8px;text-decoration:none;">☁️ Drive</a>`
-        : '';
-      const dlBtn = file.driveId
-        ? `<button class="btn btn-sm" style="font-size:.7rem;padding:3px 8px;" data-dl-post="${post.id}" data-dl-idx="${idx}" title="Pobierz">⬇️</button>`
-        : '';
-      const row = document.createElement('div');
-      row.className = 'file-row';
-      row.innerHTML = `
-        <span class="file-row-icon">${icon}</span>
-        <div class="file-row-info">
-          <div class="file-row-name">${escHtml(file.name)}</div>
-          <div class="file-row-size">${fmtSize(file.size)}</div>
-        </div>
-        <div class="file-row-actions">
-          ${driveBtn}${dlBtn}
-          <button class="btn btn-sm btn-danger" onclick="deletePostFile('${post.id}',${idx})">Usuń</button>
-        </div>`;
-      card.appendChild(row);
+      const item = document.createElement('div');
+      item.className = 'file-gallery-item';
+
+      let previewInner = '';
+      if (file.type?.startsWith('image') && file.driveThumbUrl) {
+        previewInner = `<img src="${file.driveThumbUrl}" loading="lazy">`;
+      } else if (file.type?.startsWith('video')) {
+        previewInner = `<span style="font-size:2rem;">🎬</span><span class="play-icon">▶️</span>`;
+      } else if (file.type === 'application/pdf') {
+        previewInner = `<span style="font-size:1rem;font-weight:700;color:#e74c3c;">PDF</span>`;
+      } else if (file.type?.includes('word') || file.name?.endsWith('.docx') || file.name?.endsWith('.doc')) {
+        previewInner = `<span style="font-size:1rem;font-weight:700;color:#2980b9;">DOC</span>`;
+      } else if (file.type?.startsWith('image')) {
+        previewInner = `<span style="font-size:2rem;">🖼️</span>`;
+      } else {
+        previewInner = `<span style="font-size:2rem;">📄</span>`;
+      }
+
+      item.innerHTML = `
+        <div class="file-gallery-preview">${previewInner}</div>
+        <div class="file-gallery-name">${escHtml(file.name)}</div>
+        <div class="file-gallery-meta">${formatDate(post.date)}</div>`;
+
+      item.querySelector('.file-gallery-preview').onclick = () => openFileLb(post.id, idx);
+      gallery.appendChild(item);
     });
 
+    galleryWrap.appendChild(gallery);
+
+    // Add file button
     const addBtn = document.createElement('div');
     addBtn.className = 'file-add-btn';
     addBtn.innerHTML = '<span>＋</span> Dodaj plik';
     addBtn.onclick = () => openDetail(post.id);
-    card.appendChild(addBtn);
+    galleryWrap.appendChild(addBtn);
 
+    card.appendChild(galleryWrap);
     wrap.appendChild(card);
-  });
-
-  // Event delegation for individual download buttons
-  wrap.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-dl-post]');
-    if (!btn) return;
-    const postId = btn.dataset.dlPost;
-    const idx = parseInt(btn.dataset.dlIdx);
-    const post = posts.find(p => p.id === postId);
-    if (post?.files?.[idx]) smartDownloadFile(post.files[idx]);
   });
 }
 
@@ -2761,6 +2889,114 @@ async function handleFiles(e) {
   renderFileList(post.files);
   renderFilesTab();
 }
+// ── FILE LIGHTBOX (posty) ──
+let fileLbPostId = null;
+let fileLbFileIdx = null;
+
+function openFileLb(postId, fileIdx) {
+  const post = posts.find(p => p.id === postId);
+  if (!post || !post.files?.[fileIdx]) return;
+  const f = post.files[fileIdx];
+  fileLbPostId = postId;
+  fileLbFileIdx = fileIdx;
+
+  const inner = document.getElementById('file-lb-inner');
+  // clear previous media
+  const oldMedia = inner.querySelector('img.lb-media, video.lb-media, .file-lb-icon-big');
+  if (oldMedia) oldMedia.remove();
+
+  // insert media element before file-lb-name
+  const nameEl = document.getElementById('file-lb-name');
+  nameEl.textContent = f.name;
+
+  if (f.type?.startsWith('image') && f.driveThumbUrl) {
+    const img = document.createElement('img');
+    img.className = 'lb-media';
+    img.src = f.driveThumbUrl;
+    inner.insertBefore(img, nameEl);
+  } else if (f.type?.startsWith('video')) {
+    const icon = document.createElement('div');
+    icon.className = 'file-lb-icon-big';
+    icon.textContent = '🎬';
+    inner.insertBefore(icon, nameEl);
+  } else if (f.type === 'application/pdf') {
+    const icon = document.createElement('div');
+    icon.className = 'file-lb-icon-big';
+    icon.textContent = '📕';
+    inner.insertBefore(icon, nameEl);
+  } else if (f.type?.includes('word') || f.name?.endsWith('.docx') || f.name?.endsWith('.doc')) {
+    const icon = document.createElement('div');
+    icon.className = 'file-lb-icon-big';
+    icon.textContent = '📘';
+    inner.insertBefore(icon, nameEl);
+  } else {
+    const icon = document.createElement('div');
+    icon.className = 'file-lb-icon-big';
+    icon.textContent = '📄';
+    inner.insertBefore(icon, nameEl);
+  }
+
+  // Drive button
+  const driveBtn = document.getElementById('file-lb-drive-btn');
+  if (f.driveLink) {
+    driveBtn.href = f.driveLink;
+    driveBtn.style.display = '';
+  } else {
+    driveBtn.style.display = 'none';
+  }
+
+  // Download button
+  document.getElementById('file-lb-dl-btn').onclick = () => {
+    if (f.driveId) smartDownloadFile(f);
+  };
+  document.getElementById('file-lb-dl-btn').style.display = f.driveId ? '' : 'none';
+
+  // Delete button
+  document.getElementById('file-lb-del-btn').onclick = () => deleteFileLbFile();
+
+  document.getElementById('file-lb-overlay').classList.add('open');
+}
+
+function closeFileLb() {
+  document.getElementById('file-lb-overlay').classList.remove('open');
+  fileLbPostId = null;
+  fileLbFileIdx = null;
+}
+
+async function deleteFileLbFile() {
+  const ok = await confirmAsync('Usunąć plik?');
+  if (!ok) return;
+  const post = posts.find(p => p.id === fileLbPostId);
+  if (!post) return;
+  const file = post.files[fileLbFileIdx];
+  if (file?.driveId && gdriveToken) {
+    gdriveDeleteFile(file.driveId).catch(e => console.warn('Drive delete:', e));
+  }
+  post.files.splice(fileLbFileIdx, 1);
+  await upsertPost(post);
+  closeFileLb();
+  renderFileList(post.files);
+  renderFilesTab();
+  renderCalendar();
+}
+
+function _fileThumbHTML(f) {
+  if (f.type?.startsWith('image')) {
+    if (f.driveThumbUrl) {
+      return `<img src="${f.driveThumbUrl}" loading="lazy">`;
+    }
+    return `<span class="file-thumb-type">🖼️</span>`;
+  }
+  if (f.type?.startsWith('video')) {
+    return `<span class="file-thumb-type">🎬</span><span class="play-icon">▶️</span>`;
+  }
+  if (f.type === 'application/pdf') return `<span class="file-thumb-type" style="font-size:1rem;font-weight:700;color:#e74c3c;">PDF</span>`;
+  if (f.type?.includes('word') || f.name?.endsWith('.docx') || f.name?.endsWith('.doc')) {
+    return `<span class="file-thumb-type" style="font-size:1rem;font-weight:700;color:#2980b9;">DOC</span>`;
+  }
+  return `<span class="file-thumb-type">📄</span>`;
+}
+
 function renderFileList(files) {
   const list = document.getElementById('file-list');
   list.innerHTML = '';
@@ -2768,23 +3004,24 @@ function renderFileList(files) {
   const hasDrive = files.some(f => f.driveId);
   if (dlAllBtn) dlAllBtn.style.display = (hasDrive && files.length > 1) ? '' : 'none';
 
+  if (!files.length) return;
+
+  const grid = document.createElement('div');
+  grid.className = 'file-thumb-grid';
+
   files.forEach((f, idx) => {
-    const icon = f.type?.startsWith('video') ? '🎬' : f.type?.startsWith('image') ? '🖼️' : '📄';
     const item = document.createElement('div');
-    item.className = 'file-item';
-    item.style.cssText = 'justify-content:space-between;gap:6px;';
-    const dlBtn = f.driveId
-      ? `<button class="btn btn-sm" style="padding:2px 7px;font-size:.7rem;flex-shrink:0;" data-dl-detail-idx="${idx}" title="Pobierz">⬇️</button>`
-      : '';
+    item.className = 'file-thumb-item';
     item.innerHTML = `
-      <span style="flex-shrink:0;">${icon}</span>
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(f.name)}</span>
-      <span style="color:var(--muted);font-size:.7rem;flex-shrink:0;">${fmtSize(f.size)}</span>
-      ${dlBtn}`;
-    list.appendChild(item);
+      <div class="file-thumb-preview">${_fileThumbHTML(f)}</div>
+      <div class="file-thumb-name">${escHtml(f.name)}</div>`;
+    item.querySelector('.file-thumb-preview').onclick = () => openFileLb(viewingPostId, idx);
+    grid.appendChild(item);
   });
 
-  // Event delegation for per-file download
+  list.appendChild(grid);
+
+  // Event delegation for per-file download (kept for backward compat)
   list.onclick = (e) => {
     const btn = e.target.closest('[data-dl-detail-idx]');
     if (!btn) return;
@@ -2820,8 +3057,7 @@ function renderPostModalFileList() {
       <button class="btn btn-sm btn-danger" style="padding:2px 6px;font-size:.68rem;" onclick="removePostModalFile(${idx})">✕</button>`;
     list.appendChild(item);
   });
-  const drop = document.getElementById('post-files-drop');
-  if (drop) drop.style.display = pendingFiles.length > 0 ? 'none' : '';
+  // compact button stays always visible — no hide needed
 }
 
 function removePostModalFile(idx) {
