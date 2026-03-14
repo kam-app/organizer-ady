@@ -875,19 +875,24 @@ textarea{resize:vertical;min-height:55px;}
   flex-direction:column;
   background:var(--surface);
   border-top:1px solid var(--border);
-  flex-shrink:0;
+  flex:1 1 0;
+  min-height:0;
+  overflow:hidden;
 }
 .mobile-planer-header{
   display:flex;align-items:center;justify-content:space-between;
   padding:8px 12px 6px;
   font-size:.66rem;font-weight:600;letter-spacing:1.4px;
   text-transform:uppercase;color:var(--muted);
+  flex-shrink:0;
 }
 .mobile-planer-list{
   display:flex;flex-direction:column;gap:4px;
-  overflow-y:auto;max-height:160px;
+  overflow-y:auto;
+  flex:1 1 0;
   -webkit-overflow-scrolling:touch;
   padding:0 8px 8px;
+  min-height:0;
 }
 
 /* ── MOBILE ── */
@@ -895,9 +900,31 @@ textarea{resize:vertical;min-height:55px;}
   .app{grid-template-columns:1fr;}
   .sidebar{display:none;}
   .mobile-planer{display:flex;}
-  .calendar-wrap{padding:7px;}
-  .day-cell{min-height:90px;padding:4px 3px 3px;border-radius:7px;}
-  .weekday{font-size:.59rem;}
+
+  /* Kalendarz stały — nie scrolluje */
+  #view-grid{flex:0 0 auto !important;overflow:hidden !important;}
+  .calendar-wrap{
+    flex:0 0 auto !important;
+    overflow:hidden !important;
+    padding:5px 6px;
+  }
+
+  /* Mniejsze kafelki dni — mieszczą 2 posty */
+  .day-cell{
+    min-height:70px;
+    padding:3px 2px 2px;
+    border-radius:6px;
+    gap:1px;
+  }
+  .day-number{margin-bottom:1px;}
+  .post-chip{
+    padding:2px 3px;
+    font-size:.58rem;
+    border-radius:4px;
+  }
+  .chip-dot{width:4px;height:4px;}
+
+  .weekday{font-size:.57rem;}
   .days-grid,.weekdays{gap:2px;}
   .view-header{padding:8px 10px;}
   .notes-wrap{padding:7px;}
