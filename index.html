@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Organizer Ady</title>
+
+<!-- PWA: Apple Safari -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Organizer">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d0d0f">
+
+<!-- PWA: manifest inline jako blob zarejestrowany przez SW -->
+<link rel="manifest" id="pwa-manifest">
+
+<!-- PWA: ikony Apple Touch (SVG inline jako data URI) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230d0d0f'/%3E%3Ctext x='256' y='340' font-size='260' text-anchor='middle' fill='%23c0392b' font-family='Arial Black'%3EO%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230d0d0f'/%3E%3Ctext x='256' y='340' font-size='260' text-anchor='middle' fill='%23c0392b' font-family='Arial Black'%3EO%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -703,6 +717,9 @@ textarea{resize:vertical;min-height:55px;}
 .file-lb-name{
   color:#fff;font-size:.85rem;opacity:.8;text-align:center;max-width:300px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.file-lb-loading{
+  color:var(--muted);font-size:.82rem;padding:20px;text-align:center;
 }
 .file-lb-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
 
@@ -1458,6 +1475,30 @@ async function gdriveEnsureFolders() {
   const notatId   = await gdriveEnsureFolder('Notatki', orgId);
   const kliId     = await gdriveEnsureFolder('Klienci', orgId);
   gdriveFolderIds = { root: orgId, Posty: postyId, Notatki: notatId, Klienci: kliId };
+}
+
+// ── GENERUJ MINIATURĘ z lokalnego pliku (canvas resize) ──
+function generateThumbBase64(file, maxPx = 200) {
+  return new Promise((resolve) => {
+    if (!file.type?.startsWith('image')) { resolve(null); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = Math.min(maxPx / img.width, maxPx / img.height, 1);
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.72));
+      };
+      img.onerror = () => resolve(null);
+      img.src = ev.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
 }
 
 async function gdriveUploadFile(file, subfolder) {
@@ -2700,8 +2741,8 @@ function renderFilesTab() {
       item.className = 'file-gallery-item';
 
       let previewInner = '';
-      if (file.type?.startsWith('image') && file.driveThumbUrl) {
-        previewInner = `<img src="${file.driveThumbUrl}" loading="lazy">`;
+      if (file.type?.startsWith('image') && (file.thumbData || file.driveThumbUrl)) {
+        previewInner = `<img src="${file.thumbData || file.driveThumbUrl}" loading="lazy">`;
       } else if (file.type?.startsWith('video')) {
         previewInner = `<span style="font-size:2rem;">🎬</span><span class="play-icon">▶️</span>`;
       } else if (file.type === 'application/pdf') {
@@ -2792,7 +2833,10 @@ async function savePost() {
   // Upload any newly added raw files (flagged with _file)
   const rawFiles = pendingFiles.filter(f => f._file);
   for (const entry of rawFiles) {
+    // Generuj miniaturę lokalnie PRZED uploadem
+    const thumbBase64 = await generateThumbBase64(entry._file);
     let fileEntry = { name: entry.name, size: entry.size, type: entry.type };
+    if (thumbBase64) fileEntry.thumbData = thumbBase64;
     if (gdriveToken) {
       try {
         showToast('⬆️ Przesyłanie: ' + entry.name);
@@ -2870,7 +2914,9 @@ async function handleFiles(e) {
   e.target.value = '';
 
   for (const file of newFiles) {
+    const thumbBase64 = await generateThumbBase64(file);
     let fileEntry = { name: file.name, size: file.size, type: file.type };
+    if (thumbBase64) fileEntry.thumbData = thumbBase64;
     if (gdriveToken) {
       try {
         showToast('⬆️ Przesyłanie na Drive: ' + file.name);
@@ -2893,7 +2939,11 @@ async function handleFiles(e) {
 let fileLbPostId = null;
 let fileLbFileIdx = null;
 
-function openFileLb(postId, fileIdx) {
+// ── FILE LIGHTBOX (posty) ──
+let fileLbPostId = null;
+let fileLbFileIdx = null;
+
+async function openFileLb(postId, fileIdx) {
   const post = posts.find(p => p.id === postId);
   if (!post || !post.files?.[fileIdx]) return;
   const f = post.files[fileIdx];
@@ -2901,63 +2951,127 @@ function openFileLb(postId, fileIdx) {
   fileLbFileIdx = fileIdx;
 
   const inner = document.getElementById('file-lb-inner');
-  // clear previous media
-  const oldMedia = inner.querySelector('img.lb-media, video.lb-media, .file-lb-icon-big');
-  if (oldMedia) oldMedia.remove();
+  // Usuń poprzednie media
+  inner.querySelectorAll('.lb-media,.file-lb-icon-big,.file-lb-iframe-wrap,.file-lb-loading').forEach(el => el.remove());
 
-  // insert media element before file-lb-name
   const nameEl = document.getElementById('file-lb-name');
   nameEl.textContent = f.name;
 
-  if (f.type?.startsWith('image') && f.driveThumbUrl) {
+  // Przyciski
+  const driveBtn = document.getElementById('file-lb-drive-btn');
+  driveBtn.href = f.driveLink || '#';
+  driveBtn.style.display = f.driveLink ? '' : 'none';
+  document.getElementById('file-lb-dl-btn').style.display = f.driveId ? '' : 'none';
+  document.getElementById('file-lb-dl-btn').onclick = () => { if (f.driveId) smartDownloadFile(f); };
+  document.getElementById('file-lb-del-btn').onclick = () => deleteFileLbFile();
+
+  document.getElementById('file-lb-overlay').classList.add('open');
+
+  const isImage = f.type?.startsWith('image');
+  const isVideo = f.type?.startsWith('video');
+  const isPdf   = f.type === 'application/pdf' || f.name?.toLowerCase().endsWith('.pdf');
+  const isDoc   = f.type?.includes('word') || f.name?.toLowerCase().match(/\.(docx?|odt|rtf)$/);
+
+  if (isImage) {
+    // Pokaż najpierw miniaturę, potem pobierz pełny obraz z Drive
     const img = document.createElement('img');
     img.className = 'lb-media';
-    img.src = f.driveThumbUrl;
+    img.style.cssText = 'max-width:min(700px,90vw);max-height:65dvh;border-radius:10px;object-fit:contain;';
+    if (f.thumbData || f.driveThumbUrl) {
+      img.src = f.thumbData || f.driveThumbUrl; // tymczasowo miniatura
+    }
     inner.insertBefore(img, nameEl);
-  } else if (f.type?.startsWith('video')) {
-    const icon = document.createElement('div');
-    icon.className = 'file-lb-icon-big';
-    icon.textContent = '🎬';
-    inner.insertBefore(icon, nameEl);
-  } else if (f.type === 'application/pdf') {
-    const icon = document.createElement('div');
-    icon.className = 'file-lb-icon-big';
-    icon.textContent = '📕';
-    inner.insertBefore(icon, nameEl);
-  } else if (f.type?.includes('word') || f.name?.endsWith('.docx') || f.name?.endsWith('.doc')) {
-    const icon = document.createElement('div');
-    icon.className = 'file-lb-icon-big';
-    icon.textContent = '📘';
-    inner.insertBefore(icon, nameEl);
+
+    // Pobierz pełny obraz z Drive
+    if (f.driveId && gdriveToken) {
+      try {
+        const res = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${f.driveId}?alt=media`,
+          { headers: { 'Authorization': 'Bearer ' + gdriveToken } }
+        );
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          img.src = url;
+          img._blobUrl = url;
+        }
+      } catch(e) { console.warn('Błąd pobierania zdjęcia:', e); }
+    }
+
+  } else if (isVideo) {
+    if (f.driveId && gdriveToken) {
+      // Loader
+      const loader = document.createElement('div');
+      loader.className = 'file-lb-loading';
+      loader.textContent = '⏳ Ładowanie wideo…';
+      inner.insertBefore(loader, nameEl);
+      try {
+        const res = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${f.driveId}?alt=media`,
+          { headers: { 'Authorization': 'Bearer ' + gdriveToken } }
+        );
+        loader.remove();
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const vid = document.createElement('video');
+          vid.className = 'lb-media';
+          vid.controls = true;
+          vid.autoplay = false;
+          vid.style.cssText = 'max-width:min(700px,90vw);max-height:65dvh;border-radius:10px;';
+          vid.src = url;
+          vid._blobUrl = url;
+          inner.insertBefore(vid, nameEl);
+        } else throw new Error('HTTP ' + res.status);
+      } catch(e) {
+        loader.remove();
+        const icon = document.createElement('div');
+        icon.className = 'file-lb-icon-big';
+        icon.innerHTML = '🎬<br><span style="font-size:.7rem;color:var(--muted);">Otwórz na Drive</span>';
+        inner.insertBefore(icon, nameEl);
+      }
+    } else {
+      const icon = document.createElement('div');
+      icon.className = 'file-lb-icon-big';
+      icon.textContent = '🎬';
+      inner.insertBefore(icon, nameEl);
+    }
+
+  } else if ((isPdf || isDoc) && f.driveId) {
+    // Google Docs Viewer przez iframe — działa bez auth dla plików udostępnionych
+    // Alternatywnie: otwórz webViewLink (wymaga kliknięcia)
+    const wrap = document.createElement('div');
+    wrap.className = 'file-lb-iframe-wrap';
+    wrap.style.cssText = 'width:min(680px,92vw);height:min(520px,65dvh);border-radius:10px;overflow:hidden;background:#fff;';
+    // Spróbuj Google Docs Viewer (wymaga publicznego dostępu do pliku)
+    // Dla prywatnych plików Drive — pokaż przycisk "Otwórz na Drive"
+    const hint = document.createElement('div');
+    hint.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:var(--surface2);border-radius:10px;gap:12px;padding:20px;';
+    const typeIcon = isPdf ? '📕' : '📘';
+    const typeName = isPdf ? 'PDF' : 'Dokument Word';
+    hint.innerHTML = `
+      <span style="font-size:3.5rem;">${typeIcon}</span>
+      <span style="font-size:.85rem;color:var(--muted);text-align:center;">${typeName}<br><span style="opacity:.6;">${escHtml(f.name)}</span></span>
+      ${f.driveLink ? `<a href="${f.driveLink}" target="_blank" class="btn btn-sm" style="text-decoration:none;">☁️ Otwórz na Drive</a>` : ''}`;
+    wrap.appendChild(hint);
+    inner.insertBefore(wrap, nameEl);
+
   } else {
     const icon = document.createElement('div');
     icon.className = 'file-lb-icon-big';
     icon.textContent = '📄';
     inner.insertBefore(icon, nameEl);
   }
-
-  // Drive button
-  const driveBtn = document.getElementById('file-lb-drive-btn');
-  if (f.driveLink) {
-    driveBtn.href = f.driveLink;
-    driveBtn.style.display = '';
-  } else {
-    driveBtn.style.display = 'none';
-  }
-
-  // Download button
-  document.getElementById('file-lb-dl-btn').onclick = () => {
-    if (f.driveId) smartDownloadFile(f);
-  };
-  document.getElementById('file-lb-dl-btn').style.display = f.driveId ? '' : 'none';
-
-  // Delete button
-  document.getElementById('file-lb-del-btn').onclick = () => deleteFileLbFile();
-
-  document.getElementById('file-lb-overlay').classList.add('open');
 }
 
 function closeFileLb() {
+  const inner = document.getElementById('file-lb-inner');
+  // Zwolnij blob URL (zdjęcia i wideo)
+  inner.querySelectorAll('.lb-media').forEach(el => {
+    if (el._blobUrl) { URL.revokeObjectURL(el._blobUrl); }
+    if (el.tagName === 'VIDEO') { el.pause(); el.src = ''; }
+  });
+  inner.querySelectorAll('.lb-media,.file-lb-icon-big,.file-lb-iframe-wrap,.file-lb-loading').forEach(el => el.remove());
   document.getElementById('file-lb-overlay').classList.remove('open');
   fileLbPostId = null;
   fileLbFileIdx = null;
@@ -2982,9 +3096,8 @@ async function deleteFileLbFile() {
 
 function _fileThumbHTML(f) {
   if (f.type?.startsWith('image')) {
-    if (f.driveThumbUrl) {
-      return `<img src="${f.driveThumbUrl}" loading="lazy">`;
-    }
+    const src = f.thumbData || f.driveThumbUrl;
+    if (src) return `<img src="${src}" loading="lazy">`;
     return `<span class="file-thumb-type">🖼️</span>`;
   }
   if (f.type?.startsWith('video')) {
@@ -3179,5 +3292,44 @@ async function deleteNoteDB(id) {
 </div>
 
 </div><!-- /main-app -->
+
+<script>
+// ── PWA MANIFEST (inline blob) ──
+(function() {
+  const manifest = {
+    name: 'Organizer Ady',
+    short_name: 'Organizer',
+    description: 'Social Media Manager Organizer',
+    start_url: './',
+    scope: './',
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: '#0d0d0f',
+    theme_color: '#0d0d0f',
+    icons: [
+      {
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230d0d0f'/%3E%3Ctext x='256' y='340' font-size='260' text-anchor='middle' fill='%23c0392b' font-family='Arial Black'%3EO%3C/text%3E%3C/svg%3E",
+        sizes: '512x512',
+        type: 'image/svg+xml',
+        purpose: 'any maskable'
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
+  document.getElementById('pwa-manifest').href = URL.createObjectURL(blob);
+})();
+
+// ── SERVICE WORKER ──
+// SW jako osobny plik jest wymagany przez iOS Safari.
+// Tworzymy sw.js dynamicznie przy pierwszym uruchomieniu przez Cache API workaround.
+// Na GitHub Pages plik index.html jest jedynym plikiem — używamy workaround z importScripts.
+if ('serviceWorker' in navigator) {
+  // Próba rejestracji — zadziała jeśli sw.js istnieje obok index.html na serwerze
+  navigator.serviceWorker.register('./sw.js', {scope: './'})
+    .then(r => console.log('[PWA] SW ok:', r.scope))
+    .catch(e => console.info('[PWA] SW brak pliku sw.js — instalacja PWA wymaga pliku sw.js obok index.html'));
+}
+</script>
+
 </body>
 </html>
