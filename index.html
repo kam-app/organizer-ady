@@ -29,82 +29,126 @@ html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-seri
 
 /* ── HEADER ── */
 header{
-  display:flex;
+  display:grid;
+  grid-template-columns:44px 1fr 44px;
   align-items:center;
-  justify-content:space-between;
-  padding:6px 14px;
+  padding:0 10px;
+  height:48px;
   border-bottom:1px solid var(--border);
   background:var(--surface);
   position:sticky;top:0;z-index:100;
-  overflow:visible;
-  gap:10px;
-}
-/* LEFT block: logout btn + name + version stacked */
-.header-left{
-  display:flex;
-  flex-direction:row;
-  align-items:center;
-  gap:9px;
   flex-shrink:0;
-}
-.logo-block{
-  display:flex;flex-direction:column;
-  justify-content:center;
-  gap:2px;
-  overflow:visible;
 }
 .logo{
   font-family:'Syne',sans-serif;font-weight:800;
-  font-size:.95rem;letter-spacing:-.2px;
-  color:#c0392b;
-  display:block;line-height:1.2;
-  overflow:visible;text-transform:uppercase;
-}
-.logo-sub{ display:none; }
-.logo-ver{
-  font-size:.52rem;color:var(--muted);opacity:.55;
-  letter-spacing:.3px;line-height:1.2;display:block;
-}
-/* Logout button — styled like a badge/chip */
-.header-logout{
-  display:inline-flex;align-items:center;justify-content:center;
-  background:transparent;
-  border:1px solid var(--border);
-  border-radius:20px;
-  color:var(--muted);font-size:.62rem;cursor:pointer;
-  font-family:'DM Sans',sans-serif;
-  padding:3px 9px;
-  white-space:nowrap;flex-shrink:0;
-  transition:border-color .15s, color .15s;
-  line-height:1.4;
-}
-.header-logout:hover{color:#fa6d6d;border-color:#fa6d6d;}
-/* RIGHT block: time on top, drive status below */
-.header-right{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  justify-content:center;
-  gap:2px;
-  flex-shrink:0;
-}
-.clock-time{
-  font-family:'Syne',sans-serif;font-weight:700;
-  font-size:1.05rem;color:#e8e8f0;
-  line-height:1.2;display:block;
+  font-size:.95rem;letter-spacing:.5px;
+  color:var(--text);
+  text-transform:uppercase;
+  text-align:center;
+  grid-column:2;
   white-space:nowrap;
 }
-/* drive status inside header */
-#header-drive{
-  display:flex;align-items:center;gap:5px;
+.logo span{color:var(--accent);}
+
+/* Hamburger button */
+.hamburger-btn{
+  width:36px;height:36px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  background:transparent;border:none;cursor:pointer;
+  border-radius:10px;transition:background .15s;
+  padding:0;flex-shrink:0;
 }
-/* hide old drive bar */
+.hamburger-btn:hover{background:var(--surface2);}
+.hamburger-btn span{
+  display:block;width:18px;height:2px;
+  background:var(--muted);border-radius:2px;
+  transition:background .15s;
+}
+.hamburger-btn:hover span{background:var(--text);}
+
+/* Hamburger dropdown menu */
+.hamburger-menu{
+  position:fixed;top:52px;left:10px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:6px;
+  min-width:200px;z-index:200;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+  display:none;flex-direction:column;gap:2px;
+}
+.hamburger-menu.open{display:flex;}
+.hamburger-menu-user{
+  padding:10px 12px 8px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:4px;
+}
+.hamburger-menu-email{
+  font-size:.72rem;color:var(--muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.hamburger-menu-ver{
+  font-size:.62rem;color:var(--muted);opacity:.5;margin-top:2px;
+}
+.hamburger-menu-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:8px;
+  font-size:.82rem;color:var(--text);
+  cursor:pointer;transition:background .15s;
+  background:transparent;border:none;
+  font-family:'DM Sans',sans-serif;
+  width:100%;text-align:left;
+}
+.hamburger-menu-item:hover{background:var(--surface2);}
+.hamburger-menu-item.danger{color:#fa6d6d;}
+.hamburger-menu-item.danger:hover{background:rgba(250,109,109,.08);}
+
+/* Drive icon button — prawy róg */
+.drive-icon-btn{
+  width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  background:transparent;border:none;cursor:pointer;
+  border-radius:10px;transition:background .15s;
+  font-size:1.1rem;
+  position:relative;
+  grid-column:3;
+  justify-self:end;
+}
+.drive-icon-btn:hover{background:var(--surface2);}
+.drive-status-dot{
+  position:absolute;top:6px;right:6px;
+  width:7px;height:7px;border-radius:50%;
+  background:var(--muted);
+  border:1.5px solid var(--surface);
+}
+.drive-status-dot.connected{background:#6dfa9a;}
+
+/* Drive dropdown */
+.drive-menu{
+  position:fixed;top:52px;right:10px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:10px 14px 12px;
+  min-width:190px;z-index:200;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+  display:none;flex-direction:column;gap:8px;
+}
+.drive-menu.open{display:flex;}
+.drive-menu-title{
+  font-size:.65rem;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.6px;
+}
+.drive-menu-status{
+  font-size:.82rem;display:flex;align-items:center;gap:7px;
+}
+.drive-menu-quota{font-size:.75rem;color:var(--muted);}
+
+/* hide old elements */
+.header-left,.header-right,.header-logout,.logo-block,.logo-ver,
+.logo-sub,.clock-time,#header-drive{ display:none !important; }
 #drive-status-bar{ display:none !important; }
-/* mobile: shrink time a bit */
+#drive-status{ display:none !important; }
+
 @media(max-width:380px){
-  .clock-time{font-size:.9rem;}
+  header{padding:0 6px;}
   .logo{font-size:.85rem;}
-  header{padding:5px 10px;}
 }
 
 /* ── TABS ── */
@@ -123,23 +167,50 @@ header{
 .tab.active{background:var(--bg);color:var(--text);border-color:var(--border);}
 .tab:not(.active):hover{color:var(--text);}
 
+/* ── BOTTOM NAV (mobile only) ── */
+.bottom-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  height:56px;z-index:150;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  grid-template-columns:repeat(4,1fr);
+  align-items:stretch;
+}
+.bottom-nav-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;border:none;background:transparent;
+  cursor:pointer;font-family:'DM Sans',sans-serif;
+  color:var(--muted);transition:color .15s;
+  padding:6px 0;
+  -webkit-tap-highlight-color:transparent;
+}
+.bottom-nav-item.active{color:var(--accent);}
+.bottom-nav-item:active{opacity:.7;}
+.bottom-nav-icon{font-size:1.2rem;line-height:1;}
+.bottom-nav-label{
+  font-size:.58rem;font-weight:500;
+  letter-spacing:.2px;line-height:1;
+}
+.bottom-nav-item.active .bottom-nav-label{font-weight:700;}
+
 /* ── BUTTONS ── */
 .btn{
-  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  background:transparent;border:1px solid var(--border);color:var(--muted);
   padding:7px 13px;border-radius:8px;font-size:.82rem;
-  font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap;
+  font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .18s;white-space:nowrap;
 }
-.btn:hover{background:var(--border);}
+.btn:hover{border-color:var(--text);color:var(--text);background:var(--surface2);}
 .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500;}
-.btn-primary:hover{background:#6b5de8;}
+.btn-primary:hover{background:#a93226;border-color:#a93226;color:#fff;}
 .btn-sm{padding:5px 10px;font-size:.76rem;}
 .btn-danger{color:#fa6d6d;border-color:#3a2020;}
-.btn-danger:hover{background:#2a1515;}
+.btn-danger:hover{background:rgba(250,109,109,.08);border-color:#fa6d6d;}
 
 /* ── LAYOUT ── */
 .app{
   display:grid;grid-template-columns:190px 1fr;
-  height:calc(100dvh - 54px - 34px - 43px);
+  height:calc(100dvh - 48px - 43px);
   overflow:hidden;
   min-height:0;
   align-items:stretch;
@@ -186,6 +257,18 @@ header{
   border-left:3px solid transparent;transition:filter .15s,border-color .15s;
 }
 .planer-tile:hover{filter:brightness(1.12);border-color:var(--accent);}
+.planer-tile.urgent{
+  background:rgba(192,57,43,.07);
+  border-color:rgba(192,57,43,.3);
+}
+.planer-tile.urgent:hover{border-color:var(--accent);}
+.sidebar-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--accent);color:#fff;
+  font-size:.55rem;font-weight:700;
+  min-width:16px;height:16px;border-radius:20px;
+  padding:0 4px;margin-left:6px;line-height:1;
+}
 .planer-tile-top{
   display:flex;align-items:center;gap:6px;
   font-size:.79rem;font-weight:600;margin-bottom:3px;
@@ -297,12 +380,16 @@ header{
   flex-shrink:0;line-height:1.4;
 }
 .post-chip{
-  display:flex;align-items:center;gap:3px;padding:3px 5px;
-  border-radius:5px;font-size:.65rem;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;
+  padding:2px 4px 2px 5px;
+  border-radius:4px;font-size:.65rem;font-weight:500;cursor:pointer;
   transition:filter .15s;overflow:hidden;flex-shrink:0;
+  border-left:3px solid currentColor;
+  background:rgba(255,255,255,.04);
+  gap:3px;
 }
-.post-chip:hover{filter:brightness(1.25);}
-.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.post-chip:hover{filter:brightness(1.3);}
+.chip-dot{display:none;}
 .chip-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .more-badge{font-size:.62rem;color:var(--muted);padding:1px 3px;flex-shrink:0;cursor:pointer;}
 .more-badge:hover{color:var(--text);}
@@ -369,12 +456,13 @@ header{
 .note-card{
   background:var(--surface);border:1px solid var(--border);border-radius:10px;
   padding:12px 14px;display:flex;align-items:flex-start;gap:10px;
-  cursor:pointer;transition:border-color .15s,opacity .3s,box-shadow .15s;
+  cursor:pointer;transition:border-color .2s,opacity .3s,box-shadow .2s,transform .2s;
   user-select:none;-webkit-user-select:none;
   position:relative;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
 }
-.note-card:hover{border-color:var(--accent);}
-.note-card.done{opacity:.35;}
+.note-card:hover{border-color:var(--accent);box-shadow:0 5px 18px rgba(192,57,43,.12);transform:translateY(-1px);}
+.note-card.done{opacity:.35;transform:none;}
 .note-card.dragging{
   opacity:.5;border-color:var(--accent);
   box-shadow:0 8px 32px rgba(192,57,43,.3);
@@ -531,7 +619,7 @@ header{
 
 /* ── MODAL (post form / detail) ── */
 .modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:600;
+  position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:620;
   display:flex;align-items:flex-end;justify-content:center;
   backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .2s;
 }
@@ -557,7 +645,10 @@ input,select,textarea{
   font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;
   transition:border-color .15s;-webkit-appearance:none;
 }
-input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(192,57,43,.15);
+}
 select option{background:var(--surface);}
 textarea{resize:vertical;min-height:55px;}
 .color-picker-row{display:flex;gap:7px;flex-wrap:wrap;}
@@ -800,9 +891,14 @@ textarea{resize:vertical;min-height:55px;}
   background:var(--surface);border:1px solid var(--border);
   border-radius:12px;padding:14px 14px 12px;
   position:relative;cursor:default;
-  transition:border-color .15s,box-shadow .15s;
+  transition:border-color .2s,box-shadow .2s,transform .2s;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
 }
-.client-card:hover{border-color:var(--accent);box-shadow:0 4px 18px rgba(192,57,43,.12);}
+.client-card:hover{
+  border-color:var(--accent);
+  box-shadow:0 6px 22px rgba(192,57,43,.15);
+  transform:translateY(-2px);
+}
 .client-card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
 .client-card-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
 .client-card-name{
@@ -897,9 +993,14 @@ textarea{resize:vertical;min-height:55px;}
 
 /* ── MOBILE ── */
 @media(max-width:620px){
-  .app{grid-template-columns:1fr;}
+  .app{
+    grid-template-columns:1fr;
+    height:calc(100dvh - 48px - 43px - 56px);
+  }
   .sidebar{display:none;}
   .mobile-planer{display:flex;}
+  .tabs{display:none;}
+  .bottom-nav{display:grid;}
 
   /* Kalendarz stały — nie scrolluje */
   #view-grid{flex:0 0 auto !important;overflow:hidden !important;}
@@ -990,18 +1091,38 @@ textarea{resize:vertical;min-height:55px;}
 
 <!-- HEADER -->
 <header>
-  <div class="header-left">
-    <button class="header-logout" onclick="handleLogout()">wyloguj</button>
-    <div class="logo-block">
-      <span class="logo">Organizer</span>
-      <span class="logo-ver">v1.1.140326</span>
-    </div>
-  </div>
-  <div class="header-right">
-    <span class="clock-time" id="clock-time">--:--</span>
-    <div id="header-drive"><div id="drive-status"></div></div>
-  </div>
+  <!-- Hamburger -->
+  <button class="hamburger-btn" id="hamburger-btn" onclick="toggleHamburgerMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+
+  <!-- Logo centrum -->
+  <div class="logo"><span>O</span>RGANIZER</div>
+
+  <!-- Drive icon -->
+  <button class="drive-icon-btn" id="drive-icon-btn" onclick="toggleDriveMenu()" aria-label="Google Drive">
+    ☁️
+    <span class="drive-status-dot" id="drive-status-dot"></span>
+  </button>
 </header>
+
+<!-- Hamburger dropdown -->
+<div class="hamburger-menu" id="hamburger-menu">
+  <div class="hamburger-menu-user">
+    <div class="hamburger-menu-email" id="hamburger-email">—</div>
+    <div class="hamburger-menu-ver">V2.0.150326</div>
+  </div>
+  <button class="hamburger-menu-item danger" onclick="closeHamburgerMenu();handleLogout();">
+    ↪ Wyloguj się
+  </button>
+</div>
+
+<!-- Drive dropdown -->
+<div class="drive-menu" id="drive-menu">
+  <div class="drive-menu-title">Google Drive</div>
+  <div class="drive-menu-status" id="drive-menu-status">—</div>
+  <div class="drive-menu-quota" id="drive-menu-quota"></div>
+</div>
 
 <!-- DRIVE STATUS BAR (hidden — kept for JS compatibility) -->
 <div id="drive-status-bar" style="display:none;"></div>
@@ -1020,7 +1141,7 @@ textarea{resize:vertical;min-height:55px;}
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div style="display:flex;flex-direction:column;gap:6px;flex:1;">
-      <div class="sidebar-section-title">Planer Publikacji</div>
+      <div class="sidebar-section-title" id="planer-title">Planer Publikacji</div>
       <div id="planer-list" style="display:flex;flex-direction:column;gap:5px;"></div>
     </div>
   </aside>
@@ -1478,16 +1599,22 @@ function gdriveLoadToken() {
     gdriveToken = token;
     const remainingMs = exp - Date.now() + 60000;
     gdriveScheduleRefresh(Math.floor(remainingMs / 1000));
+    // Token ważny — załaduj foldery w tle
+    _waitForGIS(() => gdriveEnsureFolders().catch(()=>{}));
     return true;
   }
-  // token expired but user previously connected — try silent refresh
-  if (everConnected && window.google) {
-    setTimeout(() => gdriveSignIn(true), 800);
-  } else if (everConnected) {
-    // google API not loaded yet — retry after it loads
-    setTimeout(() => { if (window.google) gdriveSignIn(true); }, 2500);
+  // Token wygasł ale użytkownik kiedyś się połączył — silent refresh
+  if (everConnected) {
+    _waitForGIS(() => gdriveSignIn(true));
   }
   return false;
+}
+
+// Czeka aż GIS script będzie gotowy, potem wywołuje callback
+function _waitForGIS(cb, attempts = 0) {
+  if (window.google?.accounts?.oauth2) { cb(); return; }
+  if (attempts > 20) return; // max 10s
+  setTimeout(() => _waitForGIS(cb, attempts + 1), 500);
 }
 
 function gdriveHandleCallback() { return false; }
@@ -1606,32 +1733,42 @@ async function gdriveDeleteFile(driveId) {
 }
 
 function renderDriveStatus() {
-  const el = document.getElementById('drive-status');
-  if (!el) return;
+  // Zaktualizuj dot na ikonie Drive
+  const dot = document.getElementById('drive-status-dot');
+  const menuStatus = document.getElementById('drive-menu-status');
+  const menuQuota  = document.getElementById('drive-menu-quota');
+
+  if (dot) dot.className = 'drive-status-dot' + (gdriveToken ? ' connected' : '');
+
+  if (!menuStatus) return;
+
   if (gdriveToken) {
-    el.innerHTML = `
-      <span id="drive-quota" style="color:var(--muted);font-size:.62rem;">…</span>
-      <span style="color:#6dfa9a;font-size:.62rem;">✓</span>
-      <button class="btn btn-sm" style="font-size:.6rem;padding:2px 7px;" onclick="gdriveSignOut()">Rozłącz</button>`;
+    menuStatus.innerHTML = `<span style="color:#6dfa9a;font-size:1rem;">✓</span> Połączony`;
     hideDriveBanner();
+    // Pobierz quota
     gdriveApiCall('https://www.googleapis.com/drive/v3/about?fields=storageQuota')
       .then(r => r.json())
       .then(data => {
         const q = data.storageQuota;
-        if (!q) return;
+        if (!q || !menuQuota) return;
         const used  = parseInt(q.usage || 0);
         const total = parseInt(q.limit || 0);
         const usedGB  = (used  / 1073741824).toFixed(1);
         const totalGB = total > 0 ? (total / 1073741824).toFixed(0) + ' GB' : '∞';
-        const qEl = document.getElementById('drive-quota');
-        if (qEl) qEl.innerHTML = `<strong style="color:var(--text);">${usedGB}</strong>/<strong style="color:var(--text);">${totalGB}</strong>`;
+        menuQuota.textContent = `${usedGB} / ${totalGB} wykorzystane`;
       })
-      .catch(() => {
-        const qEl = document.getElementById('drive-quota');
-        if (qEl) qEl.style.display = 'none';
-      });
+      .catch(() => { if (menuQuota) menuQuota.textContent = ''; });
+
+    if (menuQuota) menuQuota.innerHTML = `
+      <button class="hamburger-menu-item danger" style="padding:7px 12px;margin-top:4px;font-size:.78rem;" onclick="closeDriveMenu();gdriveSignOut();">
+        Rozłącz Drive
+      </button>`;
   } else {
-    el.innerHTML = `<button class="btn btn-sm btn-primary" style="font-size:.62rem;padding:2px 8px;" onclick="gdriveSignIn()">🔗 Drive</button>`;
+    menuStatus.innerHTML = `<span style="color:var(--muted);">✕</span> Niepołączony`;
+    if (menuQuota) menuQuota.innerHTML = `
+      <button class="hamburger-menu-item" style="padding:7px 12px;margin-top:4px;font-size:.78rem;color:var(--accent);" onclick="closeDriveMenu();gdriveSignIn();">
+        🔗 Połącz z Drive
+      </button>`;
     showDriveBanner();
   }
 }
@@ -1677,6 +1814,10 @@ async function startApp() {
     startClock();
     startRealtime();
     if (gdriveToken) gdriveEnsureFolders().catch(e => console.warn('Drive folders init:', e));
+    else if (localStorage.getItem('gdrive_connected') === '1') {
+      // Jeszcze jedna próba silent login po załadowaniu apki
+      _waitForGIS(() => gdriveSignIn(true));
+    }
     renderDriveStatus();
   } catch(e) {
     showLoader('❌ Błąd połączenia. Sprawdź internet i odśwież stronę.\n\n' + e.message);
@@ -1693,6 +1834,9 @@ function showLoginScreen() {
 function showAppScreen() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('main-app').style.display = 'flex';
+  // Uzupełnij email w hamburger menu
+  const emailEl = document.getElementById('hamburger-email');
+  if (emailEl && sbSession?.user?.email) emailEl.textContent = sbSession.user.email;
 }
 
 async function handleLogin() {
@@ -1876,25 +2020,57 @@ function confirmResolve(val) {
 }
 
 // ── CLOCK ──
-function startClock() {
-  function tick() {
-    const now = new Date();
-    const t = now.toLocaleTimeString('pl-PL',{timeZone:'Europe/Warsaw',hour:'2-digit',minute:'2-digit'});
-    document.getElementById('clock-time').textContent = t;
+// ── HAMBURGER MENU ──
+function toggleHamburgerMenu() {
+  const menu = document.getElementById('hamburger-menu');
+  const driveMenu = document.getElementById('drive-menu');
+  driveMenu.classList.remove('open');
+  menu.classList.toggle('open');
+}
+function closeHamburgerMenu() {
+  document.getElementById('hamburger-menu').classList.remove('open');
+}
+
+// ── DRIVE MENU ──
+function toggleDriveMenu() {
+  const menu = document.getElementById('drive-menu');
+  const hamburgerMenu = document.getElementById('hamburger-menu');
+  hamburgerMenu.classList.remove('open');
+  menu.classList.toggle('open');
+}
+function closeDriveMenu() {
+  document.getElementById('drive-menu').classList.remove('open');
+}
+
+// Zamknij oba menu po kliknięciu poza nimi
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#hamburger-btn') && !e.target.closest('#hamburger-menu')) {
+    closeHamburgerMenu();
   }
-  tick();
-  setInterval(tick, 10000);
+  if (!e.target.closest('#drive-icon-btn') && !e.target.closest('#drive-menu')) {
+    closeDriveMenu();
+  }
+});
+
+function startClock() {
+  // Zegar ukryty w nowym UI — funkcja zachowana dla kompatybilności
 }
 
 // ── TABS ──
 function switchTab(tab, el) {
   activeTab = tab;
+  // Sync górne zakładki (desktop)
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
   else {
     const idx = ['calendar','notes','files','clients'].indexOf(tab);
     document.querySelectorAll('.tab')[idx]?.classList.add('active');
   }
+  // Sync bottom nav (mobile)
+  document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+  const bnavId = { calendar:'bnav-calendar', notes:'bnav-notes', files:'bnav-files', clients:'bnav-clients' }[tab];
+  if (bnavId) document.getElementById(bnavId)?.classList.add('active');
+
   document.getElementById('tab-calendar').style.display = tab === 'calendar' ? 'flex' : 'none';
   document.getElementById('tab-notes').style.display    = tab === 'notes'    ? 'flex' : 'none';
   document.getElementById('tab-files').style.display    = tab === 'files'    ? 'flex' : 'none';
@@ -2098,6 +2274,12 @@ function renderSidebar() {
     .filter(p => p.date >= today && p.date <= monthEnd)
     .sort((a,b) => a.date.localeCompare(b.date));
 
+  // Badge z liczbą postów w tytule sekcji
+  const titleEl = document.getElementById('planer-title');
+  if (titleEl) {
+    titleEl.innerHTML = `Planer Publikacji${upcoming.length ? `<span class="sidebar-badge">${upcoming.length}</span>` : ''}`;
+  }
+
   function buildTiles(container) {
     container.innerHTML = '';
     if (!upcoming.length) {
@@ -2121,8 +2303,9 @@ function renderSidebar() {
         timeClass = '';
       }
 
+      const isUrgent = diffDays <= 1;
       const tile = document.createElement('div');
-      tile.className = 'planer-tile';
+      tile.className = 'planer-tile' + (isUrgent ? ' urgent' : '');
       tile.style.borderLeftColor = color;
       tile.innerHTML = `
         <div class="planer-tile-top">
@@ -3378,6 +3561,26 @@ async function deleteNoteDB(id) {
   <button class="btn btn-primary btn-sm" style="width:100%;font-size:.82rem;" onclick="gdriveSignIn();hideDriveBanner()">🔗 Połącz z Google Drive</button>
   <div class="drive-banner-hint">⚠️ Bez połączenia pliki i zdjęcia <strong>nie są zapisywane na dysku</strong> i nie będą widoczne na innych urządzeniach.</div>
 </div>
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bottom-nav-item active" id="bnav-calendar" onclick="switchTab('calendar',null)">
+    <span class="bottom-nav-icon">📅</span>
+    <span class="bottom-nav-label">Kalendarz</span>
+  </button>
+  <button class="bottom-nav-item" id="bnav-notes" onclick="switchTab('notes',null)">
+    <span class="bottom-nav-icon">📝</span>
+    <span class="bottom-nav-label">Notatki</span>
+  </button>
+  <button class="bottom-nav-item" id="bnav-files" onclick="switchTab('files',null)">
+    <span class="bottom-nav-icon">📁</span>
+    <span class="bottom-nav-label">Pliki</span>
+  </button>
+  <button class="bottom-nav-item" id="bnav-clients" onclick="switchTab('clients',null)">
+    <span class="bottom-nav-icon">👥</span>
+    <span class="bottom-nav-label">Klienci</span>
+  </button>
+</nav>
 
 </div><!-- /main-app -->
 
