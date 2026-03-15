@@ -432,6 +432,7 @@ header{
 .day-panel-body{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:7px;}
 /* desktop footer hidden — add-post tile is in body */
 .day-panel-footer{display:none;}
+.day-panel-header-close{display:none !important;}
 
 /* mobile: slide from bottom */
 @media(max-width:620px){
@@ -695,6 +696,7 @@ textarea{resize:vertical;min-height:55px;}
 .detail-field{background:var(--bg);border-radius:8px;padding:9px 11px;margin-bottom:7px;}
 .detail-field-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;font-weight:600;}
 .detail-field-value{font-size:.86rem;}
+#detail-notes .detail-field-value, .detail-notes-value{white-space:pre-wrap;word-break:break-word;}
 .detail-reminder-tile{border:1px solid transparent;}
 .files-drop{
   border:2px dashed var(--border);border-radius:8px;padding:13px;
@@ -1128,7 +1130,7 @@ textarea{resize:vertical;min-height:55px;}
 <div class="hamburger-menu" id="hamburger-menu">
   <div class="hamburger-menu-user">
     <div class="hamburger-menu-email" id="hamburger-email">—</div>
-    <div class="hamburger-menu-ver">V2.1.150326</div>
+    <div class="hamburger-menu-ver">V2.2.150326</div>
   </div>
   <button class="hamburger-menu-item danger" onclick="closeHamburgerMenu();handleLogout();">
     ↪ Wyloguj się
@@ -1344,7 +1346,6 @@ textarea{resize:vertical;min-height:55px;}
   <div class="modal">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
       <div id="detail-badge" class="detail-badge"></div>
-      <button class="close-btn" onclick="closeModal('detail-modal')">✕</button>
     </div>
     <div id="detail-title" style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;margin-bottom:11px;"></div>
     <div class="detail-field"><div class="detail-field-label">Klient</div><div class="detail-field-value" id="detail-client"></div></div>
@@ -1360,7 +1361,7 @@ textarea{resize:vertical;min-height:55px;}
       </div>
     </div>
 
-    <div class="detail-field"><div class="detail-field-label">Opis posta / Notatki</div><div class="detail-field-value" id="detail-notes"></div></div>
+    <div class="detail-field"><div class="detail-field-label">Opis posta / Notatki</div><div class="detail-field-value" id="detail-notes" style="white-space:pre-wrap;word-break:break-word;"></div></div>
 
     <div style="margin-top:11px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -1958,6 +1959,15 @@ function startRealtime() {
           renderNotes();
           if (activeTab === 'files') renderFilesTab();
           if (activeTab === 'clients') renderClientsTab();
+          // Odśwież otwarty detail-modal jeśli jest widoczny
+          const detailModal = document.getElementById('detail-modal');
+          if (detailModal?.classList.contains('open') && viewingPostId) {
+            const updated = posts.find(p => p.id === viewingPostId);
+            if (updated) {
+              document.getElementById('detail-notes').textContent = updated.notes || '—';
+              renderFileList(updated.files || []);
+            }
+          }
         } catch(err) { console.warn('Realtime reload error:', err); }
       }, 400);
     } catch(err) { console.warn('Realtime parse error:', err); }
@@ -2143,14 +2153,21 @@ function switchTab(tab, el) {
   document.getElementById('tab-clients').style.display  = tab === 'clients'  ? 'flex' : 'none';
   const sidebar = document.getElementById('sidebar');
   const grid    = document.getElementById('app-grid');
+  const isMobile = window.innerWidth <= 620;
+
   if (tab === 'calendar') {
-    sidebar.style.display = '';
-    // Przywróć aktualną szerokość sidebara (nie resetuj do CSS default)
-    const sidebarW = sidebar.getBoundingClientRect().width || parseInt(sidebar.style.width) || 190;
-    grid.style.gridTemplateColumns = sidebarW + 'px 1fr';
+    if (!isMobile) {
+      sidebar.style.display = '';
+      // Przywróć aktualną szerokość sidebara
+      const sidebarW = parseInt(sidebar.style.width) || 190;
+      grid.style.gridTemplateColumns = sidebarW + 'px 1fr';
+    } else {
+      // Mobile: sidebar zawsze ukryty, grid 1fr
+      grid.style.gridTemplateColumns = '1fr';
+    }
     if (typeof renderCalendar === 'function') renderCalendar();
   } else {
-    sidebar.style.display = 'none';
+    if (!isMobile) sidebar.style.display = 'none';
     grid.style.gridTemplateColumns = '1fr';
   }
   if (tab === 'files') renderFilesTab();
