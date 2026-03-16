@@ -33,7 +33,8 @@ header{
   grid-template-columns:44px 1fr 44px;
   align-items:center;
   padding:0 10px;
-  height:48px;
+  padding-top: env(safe-area-inset-top, 0px);
+  min-height:48px;
   border-bottom:1px solid var(--border);
   background:var(--surface);
   position:sticky;top:0;z-index:100;
@@ -147,7 +148,7 @@ header{
 #drive-status{ display:none !important; }
 
 @media(max-width:380px){
-  header{padding:0 6px;}
+  header{padding:0 6px;padding-top:env(safe-area-inset-top, 0px);}
   .logo{font-size:.85rem;}
 }
 
@@ -171,7 +172,9 @@ header{
 .bottom-nav{
   display:none;
   position:fixed;bottom:0;left:0;right:0;
-  height:56px;z-index:150;
+  height:calc(56px + env(safe-area-inset-bottom, 0px));
+  padding-bottom:env(safe-area-inset-bottom, 0px);
+  z-index:150;
   background:var(--surface);
   border-top:1px solid var(--border);
   grid-template-columns:repeat(4,1fr);
@@ -184,6 +187,14 @@ header{
   color:var(--muted);transition:color .15s;
   padding:6px 0;
   -webkit-tap-highlight-color:transparent;
+  position:relative;
+}
+.bnav-badge{
+  position:absolute;top:4px;right:calc(50% - 14px);
+  background:var(--accent);color:#fff;
+  font-size:.52rem;font-weight:700;
+  min-width:14px;height:14px;border-radius:20px;
+  padding:0 3px;display:flex;align-items:center;justify-content:center;
 }
 .bottom-nav-item.active{color:var(--accent);}
 .bottom-nav-item:active{opacity:.7;}
@@ -426,7 +437,7 @@ header{
 .day-panel-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px;display:flex;flex-direction:column;gap:7px;}
 /* desktop footer hidden — add-post tile is in body */
 .day-panel-footer{display:none;}
-.day-panel-header-close{display:none !important;}
+.day-panel-header-close{display:flex;}
 
 /* mobile: slide from bottom */
 @media(max-width:620px){
@@ -1006,12 +1017,13 @@ textarea{resize:vertical;min-height:55px;}
 @media(max-width:620px){
   .app{
     grid-template-columns:1fr;
-    height:calc(100dvh - 48px - 56px);
+    height:calc(100dvh - 48px - env(safe-area-inset-top, 0px) - 56px - env(safe-area-inset-bottom, 0px));
   }
   .sidebar{display:none;}
   .mobile-planer{display:flex;}
   .tabs{display:none;}
   .bottom-nav{display:grid;}
+  .nav-btn{width:40px;height:40px;font-size:1.1rem;}
 
   /* Cały tab-calendar scrolluje w dół */
   #tab-calendar{overflow-y:auto !important;-webkit-overflow-scrolling:touch;}
@@ -1126,7 +1138,28 @@ textarea{resize:vertical;min-height:55px;}
 <div class="hamburger-menu" id="hamburger-menu">
   <div class="hamburger-menu-user">
     <div class="hamburger-menu-email" id="hamburger-email">—</div>
-    <div class="hamburger-menu-ver">V2.6.160326</div>
+    <div class="hamburger-menu-ver">V3.0.160326</div>
+  </div>
+  <button class="hamburger-menu-item" onclick="toggleChangelogPanel()">
+    📋 Raport zmian
+  </button>
+  <div id="changelog-panel" style="display:none;padding:8px 12px;font-size:.72rem;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);margin-top:4px;">
+    <div style="font-weight:700;color:var(--text);margin-bottom:6px;">Nowości w V3.0 vs V2.6</div>
+    <div>✅ Toast po zapisaniu posta</div>
+    <div>📋 Przycisk "Kopiuj opis" w podglądzie posta</div>
+    <div>⚠️ Ostrzeżenie przed zamknięciem formularza</div>
+    <div>👆 Swipe w dół zamyka panel dnia (iPhone)</div>
+    <div>✕ Przycisk zamknięcia panelu dnia (desktop)</div>
+    <div>🔔 Liczniki w dolnej nawigacji</div>
+    <div>📱 Safe-area dla notcha i Dynamic Island</div>
+    <div>⬆️ Szybszy upload plików (równoległy)</div>
+    <div>🖼️ Szybsze ładowanie miniatur (równoległe)</div>
+    <div>🔄 Auto-odświeżanie danych po powrocie</div>
+    <div>🔄 Auto-odświeżanie po reconnect Realtime</div>
+    <div>🆔 Bezpieczniejsze ID rekordów (UUID)</div>
+    <div>🛡️ Zabezpieczenie kalendarza przed błędami</div>
+    <div>— Brak klientów: czytelny komunikat w formularzu</div>
+    <div>📐 Większe strzałki kalendarza na mobile</div>
   </div>
   <button class="hamburger-menu-item danger" onclick="closeHamburgerMenu();handleLogout();">
     ↪ Wyloguj się
@@ -1285,7 +1318,7 @@ textarea{resize:vertical;min-height:55px;}
     </div>
   </div>
 </div>
-<div class="modal-overlay" id="post-modal" onclick="if(event.target===this)closeModal('post-modal')">
+<div class="modal-overlay" id="post-modal" onclick="if(event.target===this)tryClosePostModal()">
   <div class="modal">
     <div class="modal-title" id="post-modal-title">Nowy post</div>
 
@@ -1357,7 +1390,7 @@ textarea{resize:vertical;min-height:55px;}
       </div>
     </div>
 
-    <div class="detail-field"><div class="detail-field-label">Opis posta / Notatki</div><div class="detail-field-value" id="detail-notes" style="white-space:pre-wrap;word-break:break-word;"></div></div>
+    <div class="detail-field"><div class="detail-field-label" style="display:flex;justify-content:space-between;align-items:center;">Opis posta / Notatki<button class="btn btn-sm" id="detail-copy-btn" onclick="copyPostNotes()" style="font-size:.68rem;padding:2px 8px;">📋 Kopiuj</button></div><div class="detail-field-value" id="detail-notes" style="white-space:pre-wrap;word-break:break-word;"></div></div>
 
     <div style="margin-top:11px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -1584,11 +1617,22 @@ if (!window._driveVisibilityListenerAdded) {
   window._driveVisibilityListenerAdded = true;
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
-    if (!localStorage.getItem('gdrive_connected')) return; // user never connected
-    const exp = parseInt(localStorage.getItem('gdrive_token_exp') || '0');
-    if (!gdriveToken || Date.now() > exp - 30000) {
-      // token missing or about to expire — silently refresh
-      gdriveSignIn(true);
+    // Odśwież token Drive jeśli potrzeba
+    if (localStorage.getItem('gdrive_connected')) {
+      const exp = parseInt(localStorage.getItem('gdrive_token_exp') || '0');
+      if (!gdriveToken || Date.now() > exp - 30000) {
+        gdriveSignIn(true);
+      }
+    }
+    // Odśwież dane z Supabase po powrocie
+    if (sbSession) {
+      loadAll().then(() => {
+        renderSidebar();
+        renderCalendar();
+        if (activeTab === 'notes') renderNotes();
+        if (activeTab === 'files') renderFilesTab();
+        if (activeTab === 'clients') renderClientsTab();
+      }).catch(() => {});
     }
   });
 }
@@ -1904,6 +1948,7 @@ let realtimeWs = null;
 let realtimeHeartbeat = null;
 let realtimeDebounce = null;
 let _rtRef = 0;
+let _rtConnected = false;
 
 function startRealtime() {
   stopRealtime();
@@ -1915,6 +1960,8 @@ function startRealtime() {
 
   realtimeWs.onopen = () => {
     const ref = String(++_rtRef);
+    const isReconnect = _rtConnected;
+    _rtConnected = false; // reset — ustawimy na true po potwierdzeniu join
     // Supabase Realtime v2: single channel with postgres_changes for all tables
     realtimeWs.send(JSON.stringify({
       topic: 'realtime:db-changes',
@@ -1945,6 +1992,23 @@ function startRealtime() {
   realtimeWs.onmessage = (e) => {
     try {
       const msg = JSON.parse(e.data);
+
+      // Obsługa potwierdzenia join (phx_reply) — wykrywanie reconnect
+      if (msg.event === 'phx_reply' && msg.payload?.status === 'ok' && msg.ref === String(_rtRef)) {
+        if (_rtConnected) {
+          // To jest reconnect — odśwież dane
+          loadAll().then(() => {
+            renderSidebar();
+            renderCalendar();
+            if (activeTab === 'notes') renderNotes();
+            if (activeTab === 'files') renderFilesTab();
+            if (activeTab === 'clients') renderClientsTab();
+          }).catch(() => {});
+        }
+        _rtConnected = true;
+        return;
+      }
+
       // Supabase v2 sends event='postgres_changes' with payload.data.type = INSERT/UPDATE/DELETE
       const isDbChange = msg.event === 'postgres_changes';
       if (!isDbChange) return;
@@ -2036,6 +2100,7 @@ async function loadAll() {
       notes = ord;
     }
   } catch(e) {}
+  updateNavBadges();
 }
 
 // ── TOAST ──
@@ -2129,6 +2194,11 @@ function toggleHamburgerMenu() {
 }
 function closeHamburgerMenu() {
   document.getElementById('hamburger-menu').classList.remove('open');
+}
+
+function toggleChangelogPanel() {
+  const p = document.getElementById('changelog-panel');
+  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
 }
 
 // ── DRIVE MENU ──
@@ -2225,6 +2295,7 @@ function switchTab(tab, el) {
 
 // ── CALENDAR GRID ──
 function renderCalendar() {
+  try {
   document.getElementById('month-title').textContent = `${MONTH_NAMES[currentMonth]} ${currentYear}`;
 
   const firstDay   = new Date(currentYear, currentMonth, 1);
@@ -2292,6 +2363,14 @@ function renderCalendar() {
 
     grid.appendChild(cell);
   }
+  } catch(e) {
+    console.error('renderCalendar error:', e);
+    showToast('⚠️ Błąd ładowania kalendarza');
+    try {
+      document.getElementById('days-grid').innerHTML = '';
+      document.getElementById('month-title').textContent = MONTH_NAMES[currentMonth] + ' ' + currentYear;
+    } catch(_) {}
+  }
 }
 
 // ── DAY PANEL ──
@@ -2356,6 +2435,52 @@ function closeDayPanel() {
   document.getElementById('panel-overlay').classList.remove('open');
 }
 
+// ── SWIPE-TO-CLOSE DAY PANEL (iPhone bottom sheet) ──
+(function initDayPanelSwipe() {
+  const panel = document.getElementById('day-panel');
+  if (!panel) return;
+  let startY = 0;
+  let deltaY = 0;
+  let dragging = false;
+
+  panel.addEventListener('touchstart', (e) => {
+    const dp = document.getElementById('day-panel');
+    if (!dp.classList.contains('open')) return;
+    // Nie aktywuj gdy dotyk zaczyna się w scrollowanej treści
+    const body = dp.querySelector('.day-panel-body');
+    if (body && body.contains(e.target) && body.scrollTop > 0) return;
+    startY = e.touches[0].clientY;
+    deltaY = 0;
+    dragging = false;
+  }, { passive: true });
+
+  panel.addEventListener('touchmove', (e) => {
+    const dp = document.getElementById('day-panel');
+    if (!dp.classList.contains('open')) return;
+    const currentY = e.touches[0].clientY;
+    deltaY = currentY - startY;
+    if (deltaY > 0) {
+      dragging = true;
+      dp.style.transition = 'none';
+      dp.style.transform = `translateY(${deltaY}px)`;
+    }
+  }, { passive: true });
+
+  panel.addEventListener('touchend', () => {
+    const dp = document.getElementById('day-panel');
+    if (!dragging) return;
+    dp.style.transition = '';
+    if (deltaY > 80) {
+      dp.style.transform = '';
+      closeDayPanel();
+    } else {
+      dp.style.transform = '';
+    }
+    dragging = false;
+    deltaY = 0;
+  });
+})();
+
 async function deletePanelPost(id) {
   const ok = await confirmAsync('Usunąć ten post?');
   if (!ok) return;
@@ -2375,6 +2500,35 @@ function newPostFromPanel() {
   openNewPost(activePanelDate);
 }
 
+
+// ── NAV BADGES ──
+function updateNavBadges() {
+  try {
+    const today = todayStr();
+    // Kalendarz: posty na dziś
+    const todayCount = posts.filter(p => p.date === today).length;
+    const bc = document.getElementById('bnav-badge-calendar');
+    if (bc) { bc.textContent = todayCount; bc.style.display = todayCount > 0 ? 'flex' : 'none'; }
+
+    // Notatki: nieukończone
+    const notesCount = notes.filter(n => !n.done).length;
+    const bn = document.getElementById('bnav-badge-notes');
+    if (bn) { bn.textContent = notesCount; bn.style.display = notesCount > 0 ? 'flex' : 'none'; }
+
+    // Pliki: łączna liczba plików we wszystkich postach
+    const filesCount = posts.reduce((sum, p) => sum + (p.files?.length || 0), 0);
+    const bf = document.getElementById('bnav-badge-files');
+    if (bf) { bf.textContent = filesCount; bf.style.display = filesCount > 0 ? 'flex' : 'none'; }
+
+    // Klienci: zaległe lub dzisiejsze płatności
+    const payCount = clients.filter(c => {
+      if (!c.paymentDate) return false;
+      return c.paymentDate <= today;
+    }).length;
+    const bk = document.getElementById('bnav-badge-clients');
+    if (bk) { bk.textContent = payCount; bk.style.display = payCount > 0 ? 'flex' : 'none'; }
+  } catch(e) {}
+}
 
 // ── SIDEBAR — PLANER PUBLIKACJI ──
 function renderSidebar() {
@@ -2448,7 +2602,7 @@ async function deleteClient(id) {
 
 async function addClientSidebar() {
   const name = prompt('Nazwa klienta:'); if (!name?.trim()) return;
-  const c = {id:Date.now().toString(), name:name.trim(), color:COLORS[clients.length % COLORS.length], phone:'', address:'', paymentDate:'', notes:''};
+  const c = {id:genId(), name:name.trim(), color:COLORS[clients.length % COLORS.length], phone:'', address:'', paymentDate:'', notes:''};
   clients.push(c);
   await upsertClient(c);
   renderSidebar(); populateClientSelect();
@@ -2466,7 +2620,7 @@ function hideInlineAddClient() {
 async function saveInlineClient() {
   const name = document.getElementById('new-client-name').value.trim();
   if (!name) return;
-  const c = {id:Date.now().toString(), name, color:COLORS[clients.length % COLORS.length], phone:'', address:'', paymentDate:'', notes:''};
+  const c = {id:genId(), name, color:COLORS[clients.length % COLORS.length], phone:'', address:'', paymentDate:'', notes:''};
   clients.push(c);
   await upsertClient(c);
   renderSidebar();
@@ -2563,8 +2717,7 @@ function renderClientsTab() {
 
 async function addNewClient() {
   const newC = {
-    id: Date.now().toString(),
-    name: 'Nowy klient',
+    id: genId(),
     color: COLORS[clients.length % COLORS.length],
     phone: '', address: '', paymentDate: '', notes: ''
   };
@@ -2841,7 +2994,7 @@ function onTouchEnd(e) {
 }
 
 async function addNote() {
-  const note = {id:Date.now().toString(), title:'', body:'', done:false, created:todayStr(), photos:[]};
+  const note = {id:genId(), title:'', body:'', done:false, created:todayStr(), photos:[]};
   notes.unshift(note);
   await upsertNote(note);
   renderNotes();
@@ -2953,7 +3106,7 @@ function handleNotePhoto(e) {
   const reader = new FileReader();
   reader.onload = async ev => {
     if (!note.photos) note.photos = [];
-    const photoEntry = { id: Date.now().toString(), data: ev.target.result, name: file.name };
+    const photoEntry = { id: genId(), data: ev.target.result, name: file.name };
 
     // Zablokuj przycisk 📷 podczas uploadu
     const photoBtn = document.getElementById('note-photo-btn');
@@ -3232,8 +3385,23 @@ function openNewPost(dateStr) {
 }
 
 function populateClientSelect() {
-  document.getElementById('post-client').innerHTML =
-    clients.map(c=>`<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+  if (clients.length === 0) {
+    document.getElementById('post-client').innerHTML = '<option value="" disabled selected>— Najpierw dodaj klienta —</option>';
+  } else {
+    document.getElementById('post-client').innerHTML =
+      clients.map(c=>`<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+  }
+}
+
+async function tryClosePostModal() {
+  const hasTitle = document.getElementById('post-title').value.trim();
+  const hasNotes = document.getElementById('post-notes').value.trim();
+  if (hasTitle || hasNotes || pendingFiles.length > 0) {
+    const ok = await confirmAsync('Masz niezapisany post. Zamknąć bez zapisywania?');
+    if (ok) closeModal('post-modal');
+  } else {
+    closeModal('post-modal');
+  }
 }
 
 async function savePost() {
@@ -3243,7 +3411,7 @@ async function savePost() {
   if (!clientId) { showToast('⚠️ Wybierz klienta'); return; }
   const client   = clients.find(c=>c.id===clientId);
   const post = {
-    id:        editingPostId || Date.now().toString(),
+    id:        editingPostId || genId(),
     clientId,
     clientName: client?.name || '',
     date:       date,
@@ -3285,6 +3453,7 @@ async function savePost() {
     await upsertPost(post);
     pendingFiles = [];
     closeModal('post-modal'); renderCalendar(); renderSidebar();
+    showToast('✅ Post zapisany');
     if (activePanelDate) openDayPanel(activePanelDate);
   } catch(err) {
     showToast('❌ Błąd zapisu: ' + (err.message || 'sprawdź połączenie'));
@@ -3305,6 +3474,8 @@ function openDetail(id) {
   document.getElementById('detail-client').textContent   = post.clientName;
   document.getElementById('detail-date').textContent     = formatDate(post.date);
   document.getElementById('detail-notes').textContent    = post.notes || '—';
+  const copyBtn = document.getElementById('detail-copy-btn');
+  if (copyBtn) copyBtn.style.display = post.notes ? '' : 'none';
   document.getElementById('detail-reminder').textContent = post.reminder ? `⏰ ${post.reminder}` : '—';
   renderFileList(post.files||[]);
   openModal('detail-modal');
@@ -3329,6 +3500,15 @@ function editCurrentPost() {
   openModal('post-modal');
 }
 
+function copyPostNotes() {
+  const text = document.getElementById('detail-notes').textContent;
+  if (text && text !== '—') {
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('📋 Skopiowano!'))
+      .catch(() => showToast('⚠️ Błąd kopiowania'));
+  }
+}
+
 async function deleteCurrentPost() {
   const ok = await confirmAsync('Usunąć ten post?');
   if(!ok) return;
@@ -3348,28 +3528,34 @@ async function handleFiles(e) {
   const post = posts.find(p=>p.id===viewingPostId); if(!post) return;
   const newFiles = Array.from(e.target.files);
   e.target.value = '';
+  if (newFiles.length === 0) return;
 
-  for (const file of newFiles) {
-    const thumbBase64 = await generateThumbBase64(file);
+  showToast('⬆️ Przesyłanie ' + newFiles.length + ' pliku/plików…');
+
+  // Generuj miniatury równolegle
+  const thumbs = await Promise.all(newFiles.map(f => generateThumbBase64(f)));
+
+  // Uploaduj na Drive równolegle
+  const results = await Promise.all(newFiles.map(async (file, i) => {
     let fileEntry = { name: file.name, size: file.size, type: file.type };
-    if (thumbBase64) fileEntry.thumbData = thumbBase64;
+    if (thumbs[i]) fileEntry.thumbData = thumbs[i];
     if (gdriveToken) {
       try {
-        showToast('⬆️ Przesyłanie na Drive: ' + file.name);
         const driveFile = await gdriveUploadFile(file, 'Posty');
         fileEntry.driveId = driveFile.driveId;
         fileEntry.driveLink = driveFile.webViewLink;
-        showToast('✅ Dodano na Drive: ' + file.name);
       } catch(err) {
-        showToast('⚠️ Drive niedostępny, zapisano lokalnie');
         console.warn('Drive upload error:', err);
       }
     }
-    post.files = [...(post.files||[]), fileEntry];
-  }
+    return fileEntry;
+  }));
+
+  post.files = [...(post.files||[]), ...results];
   await upsertPost(post);
   renderFileList(post.files);
   renderFilesTab();
+  showToast('✅ Dodano na Drive');
 }
 // ── FILE LIGHTBOX (posty) ──
 let fileLbPostId = null;
@@ -3546,17 +3732,17 @@ function _fileThumbHTML(f) {
 // Hydration — podmienia src dla zdjęć bez miniatury, pobierając z Drive
 async function _hydrateThumbsInContainer(container) {
   if (!gdriveToken) return;
-  const imgs = container.querySelectorAll('img[data-needs-thumb="1"]');
-  for (const img of imgs) {
+  const imgs = [...container.querySelectorAll('img[data-needs-thumb="1"]')];
+  await Promise.all(imgs.map(async img => {
     const driveId = img.dataset.driveId;
-    if (!driveId) continue;
+    if (!driveId) return;
     const url = await gdriveGetThumb(driveId);
     if (url) {
       img.src = url;
       img.style.opacity = '';
       img.removeAttribute('data-needs-thumb');
     }
-  }
+  }));
 }
 
 function renderFileList(files) {
@@ -3658,6 +3844,7 @@ function changeMonth(dir) {
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function pad(n)         { return String(n).padStart(2,'0'); }
+function genId() { return (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString() + Math.random().toString(36).slice(2); }
 function todayStr()     { const n=new Date(); return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`; }
 function formatDate(s)  { if(!s) return '—'; const [y,m,d]=s.split('-'); return `${d}.${m}.${y}`; }
 function formatNoteDate(s) {
@@ -3751,18 +3938,22 @@ async function deleteNoteDB(id) {
 <!-- BOTTOM NAV (mobile only) -->
 <nav class="bottom-nav" id="bottom-nav">
   <button class="bottom-nav-item active" id="bnav-calendar" onclick="switchTab('calendar',null)">
+    <span class="bnav-badge" id="bnav-badge-calendar" style="display:none"></span>
     <span class="bottom-nav-icon">📅</span>
     <span class="bottom-nav-label">Kalendarz</span>
   </button>
   <button class="bottom-nav-item" id="bnav-notes" onclick="switchTab('notes',null)">
+    <span class="bnav-badge" id="bnav-badge-notes" style="display:none"></span>
     <span class="bottom-nav-icon">📝</span>
     <span class="bottom-nav-label">Notatki</span>
   </button>
   <button class="bottom-nav-item" id="bnav-files" onclick="switchTab('files',null)">
+    <span class="bnav-badge" id="bnav-badge-files" style="display:none"></span>
     <span class="bottom-nav-icon">📁</span>
     <span class="bottom-nav-label">Pliki</span>
   </button>
   <button class="bottom-nav-item" id="bnav-clients" onclick="switchTab('clients',null)">
+    <span class="bnav-badge" id="bnav-badge-clients" style="display:none"></span>
     <span class="bottom-nav-icon">👥</span>
     <span class="bottom-nav-label">Klienci</span>
   </button>
