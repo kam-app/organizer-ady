@@ -535,8 +535,9 @@ header{
   background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius) var(--radius) 0 0;
   width:100%;max-width:500px;
-  max-height:92dvh;display:flex;flex-direction:column;
+  max-height:92dvh;min-height:0;display:flex;flex-direction:column;
   transform:translateY(16px);transition:transform .22s;
+  overflow:hidden;
 }
 .note-fullscreen.open .note-fullscreen-inner{transform:translateY(0);}
 @media(min-width:520px){
@@ -546,6 +547,8 @@ header{
     max-height:90dvh;
     max-width:680px;
     width:92vw;
+    min-height:0;
+    overflow:hidden;
   }
   .note-fs-body{padding:22px 26px;}
   .note-fs-title{font-size:1.25rem;}
@@ -564,7 +567,7 @@ header{
   .note-fs-header{border-radius:var(--radius) var(--radius) 0 0;}
 }
 .note-fs-actions{display:flex;gap:7px;align-items:center;}
-.note-fs-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px;}
+.note-fs-body{flex:1 1 0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px;min-height:0;}
 .note-fs-title{
   width:100%;background:transparent;border:none;
   font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;
@@ -576,6 +579,7 @@ header{
   width:100%;background:transparent;border:none;
   font-family:'DM Sans',sans-serif;font-size:.92rem;line-height:1.7;
   color:var(--text);outline:none;resize:none;min-height:120px;
+  display:block;
 }
 .note-fs-text::placeholder{color:var(--muted);}
 .note-fs-footer{
@@ -1101,6 +1105,9 @@ textarea{resize:vertical;min-height:55px;}
     <div style="text-align:center;margin-top:16px;font-size:.72rem;color:var(--muted);">
       🔒 Dane chronione — tylko zalogowani mają dostęp
     </div>
+    <div style="text-align:center;margin-top:6px;font-size:.68rem;color:var(--muted);opacity:.55;">
+      V3.0.160326
+    </div>
   </div>
 </div>
 
@@ -1273,8 +1280,8 @@ textarea{resize:vertical;min-height:55px;}
 </div>
 
 <!-- NOTE MODAL -->
-<div class="note-fullscreen" id="note-fullscreen" onclick="if(event.target===this)cancelNoteFS()">
-  <div class="note-fullscreen-inner">
+<div class="note-fullscreen" id="note-fullscreen" onclick="if(event.target===this&&!_noteFsMouseDownInside)cancelNoteFS();_noteFsMouseDownInside=false;">
+  <div class="note-fullscreen-inner" onmousedown="_noteFsMouseDownInside=true;" ontouchstart="_noteFsMouseDownInside=true;">
     <div class="note-fs-header">
       <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;">Notatka</div>
       <div style="font-size:.72rem;color:var(--muted);" id="note-fs-date"></div>
@@ -1555,6 +1562,9 @@ let editingPostId = null, viewingPostId = null;
 let activePanelDate = null, editingNoteId = null, editingClientId = null;
 let _newNoteId = null, _newClientId = null;
 let _saveNoteFsTimer = null;
+let _noteFsMouseDownInside = false;
+let _flushingNoteFS = false;
+let _closingNoteFS = false;
 
 const COLORS = ['#7c6dfa','#fa6d9a','#6ddffa','#6dfa9a','#fad46d','#fa8d6d','#c46dfa','#fa6d6d'];
 const MONTH_NAMES = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec',
@@ -3053,9 +3063,14 @@ function openNoteFS(id) {
 }
 
 async function closeNoteFS() {
-  await flushNoteFS();
+  if (_closingNoteFS) return;
+  _closingNoteFS = true;
+  try {
+    await flushNoteFS();
+  } catch(e) { console.warn('closeNoteFS flush error:', e); }
   document.getElementById('note-fullscreen').classList.remove('open');
   editingNoteId = null;
+  _closingNoteFS = false;
   renderNotes();
 }
 
@@ -3063,21 +3078,28 @@ function saveNoteFS() {
   if (!editingNoteId) return;
   clearTimeout(_saveNoteFsTimer);
   _saveNoteFsTimer = setTimeout(async () => {
+    if (_flushingNoteFS || !editingNoteId) return;
     const n = notes.find(x=>x.id===editingNoteId); if(!n) return;
     n.title = document.getElementById('note-fs-title').value;
     n.body  = document.getElementById('note-fs-text').value;
-    await upsertNote(n);
+    try { await upsertNote(n); } catch(e) { console.warn('saveNoteFS error:', e); }
   }, 600);
 }
 
 async function flushNoteFS() {
   clearTimeout(_saveNoteFsTimer);
   _saveNoteFsTimer = null;
-  if (!editingNoteId) return;
-  const n = notes.find(x=>x.id===editingNoteId); if(!n) return;
-  n.title = document.getElementById('note-fs-title').value;
-  n.body  = document.getElementById('note-fs-text').value;
-  await upsertNote(n);
+  if (!editingNoteId || _flushingNoteFS) return;
+  _flushingNoteFS = true;
+  const n = notes.find(x=>x.id===editingNoteId);
+  if (n) {
+    const titleEl = document.getElementById('note-fs-title');
+    const textEl  = document.getElementById('note-fs-text');
+    if (titleEl) n.title = titleEl.value;
+    if (textEl)  n.body  = textEl.value;
+    try { await upsertNote(n); } catch(e) { console.warn('flushNoteFS error:', e); }
+  }
+  _flushingNoteFS = false;
 }
 
 async function deleteNoteFS() {
