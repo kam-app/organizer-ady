@@ -778,7 +778,7 @@ header{
   transform:translateY(16px);transition:transform .22s;
 }
 @media(min-width:520px){
-  .modal{border-radius:var(--radius);max-height:90dvh;max-width:600px;padding:26px 28px;}
+  .modal{border-radius:var(--radius);max-height:90dvh;max-width:920px;padding:32px 36px;}
 }
 .modal-overlay.open .modal{transform:translateY(0);}
 .modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:15px;}
@@ -847,9 +847,10 @@ textarea{resize:vertical;min-height:55px;}
   overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
   padding:11px 13px;
-  display:flex;
-  flex-direction:column;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
   gap:8px;
+  align-content:start;
   min-height:0;
 }
 .file-post-card{
@@ -858,7 +859,10 @@ textarea{resize:vertical;min-height:55px;}
   flex-shrink:0;
   width:100%;
   box-sizing:border-box;
+  cursor:pointer;
+  transition:border-color .15s;
 }
+.file-post-card:hover{border-color:var(--accent);}
 .file-post-header{
   display:flex;align-items:center;justify-content:space-between;
   padding:10px 13px;background:var(--surface2);border-bottom:1px solid var(--border);
@@ -1179,6 +1183,9 @@ textarea{resize:vertical;min-height:55px;}
   /* Kafelki planera mobilnego — pełna szerokość tekstu */
   .mobile-planer .planer-tile-name{white-space:normal;}
   .mobile-planer .planer-tile-time{white-space:normal;}
+
+  /* Zakładka Pliki: 1 kafelek w rzędzie na mobile */
+  .files-tab-wrap{grid-template-columns:1fr;}
 }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -1222,7 +1229,7 @@ textarea{resize:vertical;min-height:55px;}
       🔒 Dane chronione — tylko zalogowani mają dostęp
     </div>
     <div style="text-align:center;margin-top:6px;font-size:.68rem;color:var(--muted);opacity:.55;">
-      V3.2.170326
+      V3.3.0905
     </div>
   </div>
 </div>
@@ -1261,13 +1268,22 @@ textarea{resize:vertical;min-height:55px;}
 <div class="hamburger-menu" id="hamburger-menu">
   <div class="hamburger-menu-user">
     <div class="hamburger-menu-email" id="hamburger-email">—</div>
-    <div class="hamburger-menu-ver">V3.2.170326</div>
+    <div class="hamburger-menu-ver">V3.3.0905</div>
   </div>
   <button class="hamburger-menu-item" onclick="toggleChangelogPanel()">
     📋 Raport zmian
   </button>
   <div id="changelog-panel" style="display:none;padding:8px 12px;font-size:.72rem;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);margin-top:4px;">
-    <div style="font-weight:700;color:var(--text);margin-bottom:6px;">Nowości w V3.1 vs V3.0</div>
+    <div style="font-weight:700;color:var(--text);margin-bottom:6px;">Nowości w V3.3.0905 vs V3.2.0903</div>
+    <div>🔲 Powiększone okno posta i edycji na desktopie (920px)</div>
+    <div style="margin-top:10px;font-weight:700;color:var(--text);margin-bottom:6px;">Nowości w V3.2.0903 vs V3.2</div>
+    <div>🗂️ Zakładka Pliki: 4 kafelki w rzędzie na desktopie</div>
+    <div>📱 Zakładka Pliki: 1 kafelek w rzędzie na iPhone</div>
+    <div>📅 Zakładka Pliki: posty sortowane chronologicznie (najnowsze na górze)</div>
+    <div>🔗 Zakładka Pliki: kliknięcie kafelka otwiera podgląd posta</div>
+    <div>🔴 Zakładka Pliki: czerwona obwódka przy najechaniu myszką</div>
+    <div>🗑️ Zakładka Pliki: usunięto przycisk „Dodaj plik" z kafelków</div>
+    <div style="margin-top:10px;font-weight:700;color:var(--text);margin-bottom:6px;">Nowości w V3.1 vs V3.0</div>
     <div>📐 Większe kafelki notatek na Windows (grid)</div>
     <div>📏 Większe okno edycji notatki z zapisem rozmiaru</div>
     <div>🔗 Klikalne linki w notatkach (z potwierdzeniem)</div>
@@ -3574,7 +3590,8 @@ function renderFilesTab() {
   const wrap = document.getElementById('files-tab-wrap');
   wrap.innerHTML = '';
 
-  const postsWithFiles = posts.filter(p => p.files && p.files.length > 0);
+  const postsWithFiles = posts.filter(p => p.files && p.files.length > 0)
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   if (!postsWithFiles.length) {
     wrap.innerHTML = '<div class="files-empty">📁 Brak plików.<br>Dodaj załączniki do postów w kalendarzu.</div>';
@@ -3589,6 +3606,9 @@ function renderFilesTab() {
     const hasDriveFiles = post.files.some(f => f.driveId);
     const hdr = document.createElement('div');
     hdr.className = 'file-post-header';
+    hdr.style.cursor = 'pointer';
+    hdr.title = 'Otwórz post';
+    hdr.onclick = (e) => { if (!e.target.closest('button')) openDetail(post.id); };
     hdr.innerHTML = `
       <div>
         <div class="file-post-title" style="color:${post.color}">${escHtml(post.title)}</div>
@@ -3626,13 +3646,6 @@ function renderFilesTab() {
     galleryWrap.appendChild(gallery);
     // Async hydration — pobierz brakujące miniatury z Drive
     _hydrateThumbsInContainer(gallery);
-
-    // Add file button
-    const addBtn = document.createElement('div');
-    addBtn.className = 'file-add-btn';
-    addBtn.innerHTML = '<span>＋</span> Dodaj plik';
-    addBtn.onclick = () => openDetail(post.id);
-    galleryWrap.appendChild(addBtn);
 
     card.appendChild(galleryWrap);
     wrap.appendChild(card);
