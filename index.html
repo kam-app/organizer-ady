@@ -756,6 +756,10 @@ header{
   font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;
   transition:border-color .15s;-webkit-appearance:none;box-sizing:border-box;
 }
+.client-fs-field input[type="date"]{
+  -webkit-appearance:auto;appearance:auto;
+  color-scheme:dark;
+}
 .client-fs-field input:focus,
 .client-fs-field textarea:focus{border-color:var(--accent);}
 .client-fs-field textarea{resize:vertical;min-height:80px;}
@@ -792,6 +796,7 @@ input,select,textarea{
   font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;
   transition:border-color .15s;-webkit-appearance:none;
 }
+input[type="date"]{-webkit-appearance:auto;appearance:auto;color-scheme:dark;}
 input:focus,select:focus,textarea:focus{
   border-color:var(--accent);
   box-shadow:0 0 0 3px rgba(192,57,43,.15);
@@ -1277,18 +1282,20 @@ textarea{resize:vertical;min-height:55px;}
     📋 Raport zmian
   </button>
   <div id="changelog-panel" style="display:none;padding:8px 12px;font-size:.72rem;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);margin-top:4px;">
-    <div style="font-weight:700;color:var(--text);margin-bottom:6px;">Nowości w V3.3.0905 vs V3.2.0903</div>
+    <div style="font-weight:700;color:var(--text);margin-bottom:6px;">Nowości w V3.3.0905</div>
     <div>🔲 Powiększone okno posta i edycji na desktopie (920px)</div>
     <div>🖱️ Kliknięcie kafelka w Plikach (poza zdjęciem) otwiera post</div>
     <div>🚫 Brak kursora tekstowego na interaktywnych kafelkach</div>
-    <div style="margin-top:10px;font-weight:700;color:var(--text);margin-bottom:6px;">Nowości w V3.2.0903 vs V3.2</div>
+    <div>💳 Naprawiono datepicker daty płatności w Klientach</div>
+    <div>✏️ Poprawiono nagłówki raportu zmian</div>
+    <div style="margin-top:10px;font-weight:700;color:var(--text);margin-bottom:6px;">Nowości w V3.2.0903</div>
     <div>🗂️ Zakładka Pliki: 4 kafelki w rzędzie na desktopie</div>
     <div>📱 Zakładka Pliki: 1 kafelek w rzędzie na iPhone</div>
     <div>📅 Zakładka Pliki: posty sortowane chronologicznie (najnowsze na górze)</div>
     <div>🔗 Zakładka Pliki: kliknięcie kafelka otwiera podgląd posta</div>
     <div>🔴 Zakładka Pliki: czerwona obwódka przy najechaniu myszką</div>
     <div>🗑️ Zakładka Pliki: usunięto przycisk „Dodaj plik" z kafelków</div>
-    <div style="margin-top:10px;font-weight:700;color:var(--text);margin-bottom:6px;">Nowości w V3.1 vs V3.0</div>
+    <div style="margin-top:10px;font-weight:700;color:var(--text);margin-bottom:6px;">Nowości w V3.1</div>
     <div>📐 Większe kafelki notatek na Windows (grid)</div>
     <div>📏 Większe okno edycji notatki z zapisem rozmiaru</div>
     <div>🔗 Klikalne linki w notatkach (z potwierdzeniem)</div>
